@@ -1,4 +1,4 @@
-# mrta-bachelorsThesis
+# mrta-bachelorThesis
 
 Repository for my Bachelor Thesis at RSI TUM
 
