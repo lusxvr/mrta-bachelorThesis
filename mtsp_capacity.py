@@ -1,7 +1,7 @@
 #----------------------------
 #Solving Multiple Travelling Salesman Problem (mTSP) for Multi Robot Task Allocation
 #with Google OR Tools
-#Basic Version with no additional constraints
+#Extending the basic version with additional capacity constraints for each agent
 #----------------------------
 
 #Importing Constraint Solver from GoogleORTools with Pyton Wraper
@@ -11,23 +11,25 @@ from ortools.constraint_solver import pywrapcp
 #Importing additional Python Packages
 import math
 
-#Agent Class
-#Gets Position/Location as Parameter
-class agent():
-    def __init__(self, position):
-        self.pos = position
-
-#Task Class
-#Gets Position/Location as Parameter
-class task():
-    def __init__(self, position):
-        self.pos = position
-
 #Vertice Class
-#Gets Position/Location as Parameter
+#Instantiated with Position/Location and Demand
 class vertex():
-    def __init__(self, position):
+    def __init__(self, position, demand):
         self.pos = position
+        self.demand = demand
+
+#Agent Class inherits from Vertice
+#Instanciated with Position/Location and Capacity, Demand is set to 0
+class agent(vertex):
+    def __init__(self, position, capacity):
+        super().__init__(position, 0)
+        self.capacity = capacity
+
+#Task Class inherits from Vertice
+#Instanciated with Position/Location and Demand
+class task(vertex):
+    def __init__(self, position, demand):
+        super().__init__(position, demand)
 
 #Creation of the Data Model for the Solver from the defined Agents and Tasks
 def create_data_model(agents, tasks, finish):
@@ -35,9 +37,9 @@ def create_data_model(agents, tasks, finish):
     #Vertices List has Structure [finish, agents, tasks]
     vertices = [finish]
     for i in range(len(agents)):
-        vertices.append(vertex(agents[i].pos))
+        vertices.append(agents[i])
     for j in range(len(tasks)):
-        vertices.append(vertex(tasks[j].pos))
+        vertices.append(tasks[j])
     
     #Creating empty Distance Matrix
     data = {}
@@ -58,8 +60,19 @@ def create_data_model(agents, tasks, finish):
             if i != j:
                 data['distance_matrix'][i][j] = round(math.dist(vertices[i].pos, vertices[j].pos))
     
+    #Defining the number of Agents/Traveling Salesman
     data['num_agents'] = len(agents)
     
+    #Defining the Demands for the Tasks
+    data['demands'] = []
+    for i in range(len(vertices)):
+        data['demands'].append(vertices[i].demand)
+
+    #Defining the Capacities of the Agents
+    data['capacities'] = []
+    for i in range(len(agents)):
+        data['capacities'].append(agents[i].capacity)
+
     #Defining the Indicies of the Start and End Point of the Agents
     #These are modeled as Dummy Vertices 0, 1, 2 in the Task Graph and correspond to the according lines in the adjacence Matrix
     data['starts'] = [1, 2]
@@ -68,42 +81,47 @@ def create_data_model(agents, tasks, finish):
     return data
 
 #Saving the calculated routes and total distances in a List
-def get_routes(solution, routing, manager):
-    routes = []
-    distances = []
+def get_routes(data, solution, routing, manager):
+    routes = {}
+    routes['paths'] = []
+    routes['distances'] = []
+    routes['loads'] = []
     #Propagating through different Routes/Agents
     for route_nbr in range(routing.vehicles()):
         index = routing.Start(route_nbr)
         route = [manager.IndexToNode(index)]
         route_distance = 0
+        route_load = 0
         #Propagating through the Vertices in an single Route
         while not routing.IsEnd(index):
             previous_index = index
             index = solution.Value(routing.NextVar(index))
             route.append(manager.IndexToNode(index))
             route_distance += routing.GetArcCostForVehicle(previous_index, index, route_nbr)
-        routes.append(route)
-        distances.append(route_distance)
-    return routes, distances
+            route_load += data['demands'][manager.IndexToNode(index)]
+        routes['paths'].append(route)
+        routes['distances'].append(route_distance)
+        routes['loads'].append(route_load)
+    return routes
 
 def main():
-    #Initiating the agents with Position
+    #Initiating the agents with position and capacity
     agents = [
-        agent([-5, -1]),
-        agent([3, -1]),
+        agent([-5, -1], 8),
+        agent([3, -1], 8),
     ]
 
-    #Initiating the tasks with Position
+    #Initiating the tasks with position and demand
     tasks = [
-        task([-8, 6]),
-        task([-6, -6]),
-        task([-2, 3]),
-        task([6, -5]),
-        task([8, 5]),
+        task([-8, 6], 2),
+        task([-6, -6], 3),
+        task([-2, 3], 4),
+        task([6, -5], 1),
+        task([8, 5], 2),
     ]
 
-    #Initiating the finish vertex with position
-    finish = vertex([0, 0])
+    #Initiating the finish position with location and demand
+    finish = vertex([0, 0], 0)
 
     #Creating the Data Model
     data = create_data_model(agents, tasks, finish)
@@ -147,7 +165,36 @@ def main():
     #Setting the coeffient to make this dimension the dominant factor for the solver
     #100 is a magic number because for only one tracked dimension you just need a "large" coefficient
     #If you are tracking different dimensions the individual coefficients have to be adjusted more carefully
-    distance_dimension.SetGlobalSpanCostCoefficient(100)
+    
+    #NOTE: With additional capacity constraints the solver produces different solutions
+    #weather you prioritise Individual Total Distance or not. With the Span this high, 
+    #the solver produces the shortest single distance, but with no given specific Span
+    #The solver produces another solution with a slightly higher individual total distance
+    #but with a smaller overall distance
+    #This also only happens when setting different Local Search Metaheiristics, which can
+    #make the solver significantly slower (or search infinite) but produce a slightly lower
+    #indiividual maximal distance
+    
+    #distance_dimension.SetGlobalSpanCostCoefficient(100)
+
+    #Creating Demand Callback for the Solver
+    def demand_callback(from_index):
+        from_node = manager.IndexToNode(from_index)
+        return data['demands'][from_node]
+
+    #Creating and an Transit Callback ID for the solver/model from the demand callback
+    demand_callback_index = routing.RegisterUnaryTransitCallback(demand_callback)
+
+    #Adding Capacity Dimension
+    routing.AddDimensionWithVehicleCapacity(
+        demand_callback_index, 
+        0, 
+        data['capacities'], 
+        True, 
+        'Capacity'
+    )
+    capacity_dimension = routing.GetDimensionOrDie('Capacity')
+    
 
     #Creating the Search Parameters for the Solver
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
@@ -160,9 +207,9 @@ def main():
     solution = routing.SolveWithParameters(search_parameters)
     
     #Saving the Routes and corresponding Distances
-    routes, distances = get_routes(solution, routing, manager)
-    for i, route in enumerate(routes):
-        print('Route', i, route, 'Distance', distances[i])
+    routes = get_routes(data, solution, routing, manager)
+    for i in range(len(routes['paths'])):
+        print('Route', i, routes['paths'][i], '| Distance:', routes['distances'][i], '| Load:', routes['loads'][i])
 
 if __name__ == '__main__':
     main()
