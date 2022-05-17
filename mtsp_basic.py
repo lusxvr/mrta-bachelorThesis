@@ -22,43 +22,68 @@ class agent():
 class task():
     def __init__(self, position):
         self.pos = position
+#Vertice Class
+#Can be instantiated with different Attributes
+class vertice():
+    def __init__(self, position):
+        self.pos = position
 
 #Creation of the Data Model for the Solver from the defined Agents and Tasks
-def create_data_model(agents, tasks):
+def create_data_model(agents, tasks, finish):
+    #Merging the agents, tasks and finish locations to single vertice list
+    #Vertices List has Structure [finish, agents, tasks]
+    vertices = [finish]
+    for i in range(len(agents)):
+        vertices.append(vertice(agents[i].pos))
+    for j in range(len(tasks)):
+        vertices.append(vertice(tasks[j].pos))
+    
+    #Creating empty Distance Matrix
     data = {}
-    data['distance_matrix'] = [
-        	[0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0], 
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-    ]
-    #Creating the Distance Matrix, this is the Adjacence Matrix of the Task Graph
-    #The weights (distances) are the cartesian Distances between the Task Positions
-    #Alternatively the matrix can be viewed as the Time Matrix (makes the future additional Constraints easier to formulate) which is the same as th
+    data['distance_matrix'] = []
+    for i in range(len(vertices)):
+        data['distance_matrix'].append([])
+        for j in range(len(vertices)):
+            data['distance_matrix'][i].append(0)
+    
+    #Creating the Distance Matrix, this is the Adjacence Matrix of the Vertices Graph
+    #The weights are the cartesian Distances between the Vertice Positions
+    #Alternatively the matrix can be viewed as the Time Matrix (makes the future additional Constraints easier to formulate) which is the same as the
     #distance Matrix for constant speed
-    for i in range(len(tasks)):
-        for j in range(len(tasks)):
+    
+    #Filling the Matrix with the distances between the Vertices
+    for i in range(len(vertices)):
+        for j in range(len(vertices)):
             if i != j:
-                data['distance_matrix'][i][j] = round(math.dist(tasks[i].pos, tasks[j].pos))
+                data['distance_matrix'][i][j] = round(math.dist(vertices[i].pos, vertices[j].pos))
+    
     data['num_agents'] = len(agents)
+    
     #Defining the Indicies of the Start and End Point of the Agents
-    #These are modeled as Dummy Vertices in the Task Graph and correspond to the according lines in the adjacence Matrix
-    data['starts'] = [0, 0]
+    #These are modeled as Dummy Vertices 0, 1, 2 in the Task Graph and correspond to the according lines in the adjacence Matrix
+    data['starts'] = [1, 2]
     data['ends'] = [0, 0]
+    
     return data
 
-#Saving the calculated routes in a List
+#Saving the calculated routes and total distances in a List
 def get_routes(solution, routing, manager):
     routes = []
+    distances = []
+    #Propagating through different Routes/Agents
     for route_nbr in range(routing.vehicles()):
         index = routing.Start(route_nbr)
         route = [manager.IndexToNode(index)]
+        route_distance = 0
+        #Propagating through the Vertices in an single Route
         while not routing.IsEnd(index):
+            previous_index = index
             index = solution.Value(routing.NextVar(index))
             route.append(manager.IndexToNode(index))
+            route_distance += routing.GetArcCostForVehicle(previous_index, index, route_nbr)
         routes.append(route)
-    return routes
+        distances.append(route_distance)
+    return routes, distances
 
 def main():
     #Initiating the agents
@@ -76,8 +101,11 @@ def main():
         task([8, 5]),
     ]
 
+    #Initiating the finish position
+    finish = vertice([0, 0])
+
     #Creating the Data Model
-    data = create_data_model(agents, tasks)
+    data = create_data_model(agents, tasks, finish)
 
     #Creating the Index Manager for the Solver
     manager = pywrapcp.RoutingIndexManager(len(data['distance_matrix']), 
@@ -114,23 +142,26 @@ def main():
     
     #Including the Dimension in the Routing Model
     distance_dimension = routing.GetDimensionOrDie(dimension_name)
-    #Sets the coeffient to make this dimension the dominant factor for the solver
+    
+    #Setting the coeffient to make this dimension the dominant factor for the solver
     #100 is a magic number because for only one tracked dimension you just need a "large" coefficient
     #If you are tracking different dimensions the individual coefficients have to be adjusted more carefully
     distance_dimension.SetGlobalSpanCostCoefficient(100)
 
     #Creating the Search Parameters for the Solver
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+    
     #Defining the First Solution Strategy (Metaheuristic)
     search_parameters.first_solution_strategy = (
         routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
 
     #Calling the Solver
     solution = routing.SolveWithParameters(search_parameters)
-    #Saving the Routes
-    routes = get_routes(solution, routing, manager)
+    
+    #Saving the Routes and corresponding Distances
+    routes, distances = get_routes(solution, routing, manager)
     for i, route in enumerate(routes):
-        print('Route', i, route)
+        print('Route', i, route, 'Distance', distances[i])
 
 if __name__ == '__main__':
     main()
