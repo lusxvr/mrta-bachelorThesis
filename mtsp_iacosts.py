@@ -134,7 +134,8 @@ def get_routes(data, solution, routing, manager, time_dimension):
     routes['loads'] = []
     routes['mov_times'] = []
     routes['total_times'] = []
-    routes['time_windows'] = []
+    routes['vertice_times'] = []
+    routes['transit_times'] = []
     #Propagating through different Routes/Agents
     for route_nbr in range(routing.vehicles()):
         #Starting Index of current route
@@ -146,11 +147,12 @@ def get_routes(data, solution, routing, manager, time_dimension):
         load = 0
         mov_time = 0
         total_time = 0
-        time_windows = []
+        vertice_times = []
+        transit_times = []
         #Getting the cumultative value of the Time Dimension for the current route and vertex
         time_val = time_dimension.CumulVar(index)
         #Appending the Time Window of the first Vertex of the route to the list
-        time_windows.append([solution.Min(time_val), solution.Max(time_val)])
+        vertice_times.append(solution.Value(time_val))
         #Propagating through the Vertices in an single Route
         while not routing.IsEnd(index):
             #Saving the previous node
@@ -167,16 +169,18 @@ def get_routes(data, solution, routing, manager, time_dimension):
             mov_time += data['global_time_matrix'][manager.IndexToNode(previous_index)][manager.IndexToNode(index)]
             #Getting the cum value of the time dimension and adding the time windows for the new node
             time_val = time_dimension.CumulVar(index)
-            time_windows.append([solution.Min(time_val), solution.Max(time_val)])
+            vertice_times.append(solution.Value(time_val))
             #Saving the current total used time
             total_time = solution.Max(time_val)
+            transit_times.append(data['global_time_matrix'][manager.IndexToNode(previous_index)][manager.IndexToNode(index)])
         #Appending the final lists/values to the routes list after finishing the single route
         routes['paths'].append(path)
         routes['costs'].append(cost)
         routes['loads'].append(load)
         routes['mov_times'].append(mov_time)
         routes['total_times'].append(total_time)
-        routes['time_windows'].append(time_windows)
+        routes['vertice_times'].append(vertice_times)
+        routes['transit_times'].append(transit_times)
     return routes
 
 def main(agents, tasks_single, finish):
@@ -257,10 +261,12 @@ def main(agents, tasks_single, finish):
             index2 = manager.NodeToIndex(data['collabs'][i][1])
             routing.solver().Add(time_dimension.CumulVar(index1) == time_dimension.CumulVar(index2))
 
+
     #Setting the coeffient to make the time dimension the dominant factor for the solver
     #100 is a magic number because for only one tracked dimension you just need a "large" coefficient
     #If you are tracking different dimensions the individual coefficients have to be adjusted more carefully
     time_dimension.SetGlobalSpanCostCoefficient(100)
+    #routing.SetPrimaryConstrainedDimension(dimension_name)
     #NOTE: With additional capacity constraints the solver produces different solutions
     #weather you prioritise Individual Total Time or not. With the Span this high, 
     #the solver produces the shortest single distance, but with no given specific Span
@@ -292,7 +298,7 @@ def main(agents, tasks_single, finish):
     
     #Defining the First Solution Strategy & Local Search Metaheuristic
     search_parameters.first_solution_strategy = (
-        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+        routing_enums_pb2.FirstSolutionStrategy.AUTOMATIC)
     search_parameters.local_search_metaheuristic = (
         routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
     search_parameters.time_limit.FromSeconds(1)
@@ -305,8 +311,9 @@ def main(agents, tasks_single, finish):
         routes = get_routes(data, solution, routing, manager, time_dimension)
         for i in range(len(routes['paths'])):
             print('Route', i)
-            print('Path: ', routes['paths'][i], '| Time Windows:', routes['time_windows'][i])
+            print('Path: ', routes['paths'][i], '| Vertice Times:', routes['vertice_times'][i], '| Transit Times:', routes['transit_times'][i])
             print('Cost:', routes['costs'][i], '| Load:', routes['loads'][i], '| Moving Time:', routes['mov_times'][i], '| Total Time:', routes['total_times'][i])
+            print()
     else:
         print('No Solution found')
         return 1
