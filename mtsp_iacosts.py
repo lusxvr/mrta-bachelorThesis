@@ -76,7 +76,7 @@ def create_data_model(agents, tasks, finish):
     
     #Filling the Matrices, they are all Adjacency Matrices of the same graph
     #The weights are the Travel Times between the Vertice Positions and the costs for each Agent respectively
-    #Weights have to be integers for the solver (either round or scale float values)
+    #Weights have to be integers for the solver since it is framed as an integer linear programm (either round or scale float values)
     
     #Filling the Global Time Matrix with the Travel Times between the Vertices proportional to the distances
     for i in range(len(vertices)):
@@ -179,31 +179,19 @@ def get_routes(data, solution, routing, manager, time_dimension):
         routes['time_windows'].append(time_windows)
     return routes
 
-def main():
-    #Initiating the agents with position and capacity
-    agents = [
-        agent([-5, -1], 6),
-        agent([3, -1], 6),
-    ]
-
-    #Initiating the tasks with position, demand, and collaboration -> task(position, demand, collab)
-    #Each task pair requiring collaboration has to be marked with individual integers
-    #e.g. if task 1 & 2 also require collaboration you have to mark them with e.g. 2 and
-    #cannot mark them with 1 since this marker is already used
-    #Collaborative Tasks also need to be next to another since this is the way the cost
-    #function will implement them and since it is also just easier to check
-    tasks = [
-        task([-8, 6], 2, 0),
-        task([-6, -6], 3, 0),
-        task([-2, 3], 4, 0),
-        task([6, -5], 1, 0),
-        task([8, 5], 1, 1),     #Requires Collaboration (generates lower task)
-        task([9, 6], 1, 1),    #'Collaborating' Task (cant be at the same location)
-    ]
-
-    #Initiating the finish position with location and demand 0
-    finish = vertex([0, 0], 0)
-
+def main(agents, tasks_single, finish):
+    #Scanning the task list for collaborative Tasks, splitting and creating the new task list
+    collab_num = 0
+    for i in range(len(tasks_single)):
+        if tasks_single[i].collab:
+            collab_num += 1
+    tasks = []
+    for i in range(len(tasks_single)):
+        tasks.append(tasks_single[i])
+        if tasks_single[i].collab:
+            pos = tasks_single[i].pos
+            tasks.append(task([pos[0]+1, pos[1]+1], 0, tasks_single[i].collab))
+    
     #Creating the Data Model
     data = create_data_model(agents, tasks, finish)
 
@@ -305,13 +293,13 @@ def main():
     #Defining the First Solution Strategy & Local Search Metaheuristic
     search_parameters.first_solution_strategy = (
         routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
-    #search_parameters.local_search_metaheuristic = (
-    #    routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
-    #search_parameters.time_limit.FromSeconds(1)
+    search_parameters.local_search_metaheuristic = (
+        routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
+    search_parameters.time_limit.FromSeconds(1)
 
     #Calling the Solver with the search parameters
     solution = routing.SolveWithParameters(search_parameters)
-    
+
     #Saving the Routes and corresponding Data
     if solution:
         routes = get_routes(data, solution, routing, manager, time_dimension)
@@ -324,4 +312,27 @@ def main():
         return 1
 
 if __name__ == '__main__':
-    main()
+    #Initiating the agents with position and capacity
+    agents = [
+        agent([-5, -1], 6),
+        agent([3, -1], 6),
+    ]
+
+    #Initiating the tasks with position, demand, and collaboration -> task(position, demand, collab)
+    #Each task pair requiring collaboration has to be marked with individual integers
+    #e.g. if task 1 & 2 also require collaboration you have to mark them with e.g. 2 and
+    #cannot mark them with 1 since this marker is already used
+    #Collaborative Tasks also need to be next to another since this is the way the cost
+    #function will implement them and since it is also just easier to check
+    tasks = [
+        task([-8, 6], 2, 0),
+        task([-6, -6], 3, 0),
+        task([-2, 3], 4, 1),    #1 is indicating first needed collaboration
+        task([6, -5], 1, 0),
+        task([8, 5], 2, 2),     #2 in indicating second needed collaboration
+    ]
+
+    #Initiating the finish position with location and demand 0
+    finish = vertex([0, 0], 0)
+
+    main(agents, tasks, finish)
