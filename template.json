@@ -1,0 +1,56 @@
+{
+	"task" : "GenericTask",
+	"queue" : true,
+	"robot_ip" : "192.168.1.104",
+	"parameters" : {
+		"parameters":{
+			"skill_names" : ["CartPose2TestPose"],
+			"skill_types" : ["TaxMove"],
+			"as_queue" : true
+		},
+		"skills" : {
+			"CartPose2TestPose" : {
+				"skill" : {
+					"objects" :{
+						"GoalPose" : "TestPose"
+					},
+					"p0" : {
+						"dX_d" : [
+						0.1,
+						0.5
+						],
+						"ddX_d" : [
+						0.5,
+						1.0
+						],
+						"T_T_EE_g_offset" : [
+						0.0,
+						0.0,
+						0.0,
+						0.0,
+						0.0,
+						0.0
+						],
+						"finger_width" : -1,
+						"finger_speed" : 0.0,
+						"K_x" : [
+						1000.0,
+						1000.0,
+						1000.0,
+						100.0,
+						100.0,
+						100.0
+						]
+						
+					},
+					"control" : {
+						"control_mode" : 0
+					}
+
+				}
+			}
+		}
+	}
+}
+
+
