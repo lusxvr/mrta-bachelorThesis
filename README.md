@@ -20,6 +20,9 @@ y: Order/Sequence of the Tasks in the Route (starts at 0)
 Z: Name/Identifier of the assigned task to this agent-time slot
 
 e.g.:
-00task_1.json - As the first task for the first agent the algorithm assigned task 1 
+
+00task_1.json - As the first task for the first agent the algorithm assigned task 1
+
 01task_4.json - As the second task for the first agent the algorithm assigned task 4
+
 13task_5.json - As the fourth task for the second agent the algorithm assigned task 6
