@@ -14,7 +14,9 @@ Algorithm creates json File for each assigned task which follow this naming sche
 xytask_z.json
 
 x: Number of the Agent/Route this task is assigned to (starts at 0)
+
 y: Order/Sequence of the Tasks in the Route (starts at 0)
+
 Z: Name/Identifier of the assigned task to this agent-time slot
 
 e.g.:
