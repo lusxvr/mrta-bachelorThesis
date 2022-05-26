@@ -1,0 +1,11 @@
+Groups:
+  - dual-arm
+  - ""
+dual-arm:
+  Test:
+  Skills:
+    - Test
+"":
+  "": []
+  Skills:
+    - ""

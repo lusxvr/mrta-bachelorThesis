@@ -13,11 +13,14 @@
 
 #---Beginn Import----------------------------------------------------------------------------------
 #Importing Constraint Solver from GoogleORTools with Pyton Wraper
+from textwrap import indent
+from matplotlib.font_manager import json_dump
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 
 #Importing additional Python Packages
 import math
+import json
 #---End Import-------------------------------------------------------------------------------------
 
 #---Beginn Classes---------------------------------------------------------------------------------
@@ -181,6 +184,10 @@ def get_routes(data, solution, routing, manager, time_dimension):
         routes['total_times'].append(total_time)
         routes['vertice_times'].append(vertice_times)
         routes['transit_times'].append(transit_times)
+        
+        #json_object = json.dumps(routes, indent=4)
+        #with open('routes.json','w') as newfile:
+        #    newfile.write(json_object)
     return routes
 
 def main(agents, tasks_single, finish):
