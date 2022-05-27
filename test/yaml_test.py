@@ -49,7 +49,7 @@ def collapse_dict_to_string(dict):
 #Opening the Template
 with open('template.yaml') as f:
     
-    template = yaml.load(f, Loader=yaml.FullLoader)
+    template = yaml.full_load(f)
 
 #Creating an empty list for appending the tasks
 template['dual-arm']['Test'] = []
@@ -90,7 +90,7 @@ while k < max_len:
         #Checking if there is waiting time between two tasks
         if x < len(routes['paths'][0]):
             wait_time = routes['vertice_times'][0][x] - routes['vertice_times'][0][x-1] - routes['transit_times'][0][x-1]
-            #Configuring, collapsing and appending the HoldPose if nececcary
+            #Configuring, collapsing and appending the HoldPose if necessary
             if wait_time:
                 hold_pose['IP'] = '192.168.1.104'
                 hold_pose['Time'] = str(wait_time)
@@ -121,7 +121,7 @@ while k < max_len:
         #Checking if there is waiting time between the tasks
         if y < len(routes['paths'][1]):
             wait_time = routes['vertice_times'][1][y] - routes['vertice_times'][1][y-1] - routes['transit_times'][1][y-1]
-            #Configuring, collapsing and appending the HoldPose if nececcary
+            #Configuring, collapsing and appending the HoldPose if necessary
             if wait_time:
                 hold_pose['IP'] = '192.168.2.105'
                 hold_pose['Time'] = str(wait_time)
@@ -135,8 +135,6 @@ while k < max_len:
 task_list.append('Stop')
 template['dual-arm']['Test'].append('Stop')
 
-#print(task_list)
-
-#Dumping the generated sequence to a yaml file (LIB IS BROKEN!!!!!)
+#Dumping the generated sequence to a yaml file
 with open('assignment.yaml', 'w') as file:
-    yaml.dump(template, file)
+    yaml.dump(template, file, sort_keys=False, width=200)
