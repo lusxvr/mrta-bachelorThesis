@@ -33,7 +33,7 @@ Z: Name/Identifier of the assigned task to this agent-time slot
 
 13task_5.json - As the fourth task for the second agent the algorithm assigned task 6
 
-##Yaml Output
+## Yaml Output
 
 Make sure to have template.yaml in the directory
 
