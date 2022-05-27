@@ -32,3 +32,9 @@ Z: Name/Identifier of the assigned task to this agent-time slot
 01task_4.json - As the second task for the first agent the algorithm assigned task 4
 
 13task_5.json - As the fourth task for the second agent the algorithm assigned task 6
+
+##Yaml Output
+
+Make sure to have template.yaml in the directory
+
+Creates assignment.yaml file which holds the generated string sequence for executing the tasks with the robot
