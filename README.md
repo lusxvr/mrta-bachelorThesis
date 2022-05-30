@@ -8,7 +8,7 @@ Solving a Multi Robot Task Allocation and Scheduling Problem as a Multiple Trave
 
 File Structure follows a complexity evolution:
 
-basic -> capacities -> capacities + time windows -> capacities + time windows + individual agent costs -> ... + json output -> ... + yaml output
+basic -> ... + capacities -> ... + time windows -> ... + individual agent costs -> ... + json output -> ... + yaml output
 
 
 ## Json Output
