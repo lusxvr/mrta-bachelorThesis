@@ -8,7 +8,7 @@ Solving a Multi Robot Task Allocation and Scheduling Problem as a Multiple Trave
 
 File Structure follows a complexity evolution:
 
-basic -> capacities -> capacities + time windows -> capacities + time windows + individual agent costs
+basic -> capacities -> capacities + time windows -> capacities + time windows + individual agent costs -> ... + json output -> ... + yaml output
 
 
 ## Json Output
@@ -37,4 +37,10 @@ Z: Name/Identifier of the assigned task to this agent-time slot
 
 Make sure to have template.yaml in the directory
 
-Creates assignment.yaml file which holds the generated string sequence for executing the tasks with the robot
+Creates skills.yaml file which holds the generated string sequence for executing the tasks with the robots
+
+One assigned Task is splitted into 3 Skills:
+
+1. Move to neutral Pose for Base Movement
+2. New Base Pose
+3. New Cart Pose

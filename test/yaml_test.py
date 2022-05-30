@@ -52,7 +52,7 @@ with open('template.yaml') as f:
     template = yaml.full_load(f)
 
 #Creating an empty list for appending the tasks
-template['dual-arm']['Test'] = []
+template['dual-arm']['MRTA'] = []
 task_list = []
 
 #Finding the max length of allocated vertices
@@ -84,9 +84,9 @@ while k < max_len:
         string_cart = collapse_dict_to_string(cart_pose)
         #Appending the strings to the file
         task_list.append(string_base)
-        template['dual-arm']['Test'].append(string_base)
+        template['dual-arm']['MRTA'].append(string_base)
         task_list.append(string_cart)
-        template['dual-arm']['Test'].append(string_cart)
+        template['dual-arm']['MRTA'].append(string_cart)
         #Checking if there is waiting time between two tasks
         if x < len(routes['paths'][0]):
             wait_time = routes['vertice_times'][0][x] - routes['vertice_times'][0][x-1] - routes['transit_times'][0][x-1]
@@ -97,7 +97,7 @@ while k < max_len:
                 hold_pose['UID'] = str(uuid.uuid4())
                 string_hold = collapse_dict_to_string(hold_pose)
                 task_list.append(string_hold)
-                template['dual-arm']['Test'].append(string_hold)
+                template['dual-arm']['MRTA'].append(string_hold)
             x += 1
         i += 1
     #Looping over the second path
@@ -115,9 +115,9 @@ while k < max_len:
         string_cart = collapse_dict_to_string(cart_pose)
         #Appending the strings to the file
         task_list.append(string_base)
-        template['dual-arm']['Test'].append(string_base)
+        template['dual-arm']['MRTA'].append(string_base)
         task_list.append(string_cart)
-        template['dual-arm']['Test'].append(string_cart)
+        template['dual-arm']['MRTA'].append(string_cart)
         #Checking if there is waiting time between the tasks
         if y < len(routes['paths'][1]):
             wait_time = routes['vertice_times'][1][y] - routes['vertice_times'][1][y-1] - routes['transit_times'][1][y-1]
@@ -127,13 +127,15 @@ while k < max_len:
                 hold_pose['Time'] = str(wait_time)
                 hold_pose['UID'] = str(uuid.uuid4())
                 string_hold = collapse_dict_to_string(hold_pose)
+                task_list.append(string_hold)
+                template['dual-arm']['MRTA'].append(string_hold)
             y += 1
         j += 1
     k += 1
 
 #Appending the Stop
 task_list.append('Stop')
-template['dual-arm']['Test'].append('Stop')
+template['dual-arm']['MRTA'].append('Stop')
 
 #Dumping the generated sequence to a yaml file
 with open('assignment.yaml', 'w') as file:

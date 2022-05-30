@@ -2,9 +2,9 @@ Groups:
   - dual-arm
   - ""
 dual-arm:
-  Test:
+  MRTA:
   Skills:
-    - Test
+    - MRTA
 "":
   "": []
   Skills:
