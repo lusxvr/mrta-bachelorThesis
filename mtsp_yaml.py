@@ -53,6 +53,15 @@ class task(vertex):
         self.collab = collab
 #---End Classes------------------------------------------------------------------------------------
 
+#Creating cost functions for the Agents
+#ATM the cost is just the distance between points, with a distortion for each agent so the costs are different
+#TODO: Implementing sophisticated cost functions
+def cost_fkt_agent_0(vert_1, vert_2):
+    return round(math.dist(vert_1.pos, vert_2.pos))+1
+
+def cost_fkt_agent_1(vert_1, vert_2):
+    return round(math.dist(vert_1.pos, vert_2.pos))-1
+
 #Creation of the Data Model for the Solver from the defined Agents and Tasks-----------------------
 def create_data_model(agents, tasks, finish):
     #Merging the agents, tasks and finish locations to single vertice list
@@ -90,15 +99,15 @@ def create_data_model(agents, tasks, finish):
             if i != j:
                 data['global_time_matrix'][i][j] = round(math.dist(vertices[i].pos, vertices[j].pos))
 
-    #Filling the cost matrixes for the agents with their individual costs (TODO: Implementing Individual cost functions)
+    #Filling the cost matrixes for the agents with their individual costs
     for i in range(len(vertices)):
         for j in range(len(vertices)):
             if i != j:
-                data['cost_matrix'][0][i][j] = round(math.dist(vertices[i].pos, vertices[j].pos))+1
+                data['cost_matrix'][0][i][j] = cost_fkt_agent_0(vertices[i], vertices[j])
     for i in range(len(vertices)):
         for j in range(len(vertices)):
             if i != j:
-                data['cost_matrix'][1][i][j] = round(math.dist(vertices[i].pos, vertices[j].pos))-1
+                data['cost_matrix'][1][i][j] = cost_fkt_agent_1(vertices[i], vertices[j])
     
     #Defining the number of Agents/Traveling Salesman
     data['num_agents'] = len(agents)
@@ -527,11 +536,9 @@ if __name__ == '__main__':
     ]
 
     #Initiating the tasks with position, demand, and collaboration -> task(position, demand, collab)
-    #Each task pair requiring collaboration has to be marked with individual integers
-    #e.g. if task 1 & 2 also require collaboration you have to mark them with e.g. 2 and
-    #cannot mark them with 1 since this marker is already used
-    #Collaborative Tasks also need to be next to another since this is the way the cost
-    #function will implement them and since it is also just easier to check
+    #If a task requires collaboration a second task will be added behind the requesting task by the data function
+    #Collaborative Tasks will be next to another since this is the way the
+    #function will implement them and since it is also just easier to check for them afterwards
     tasks = [
         task([-8, 6, 4], 2, 0),
         task([-6, -6, -3], 3, 0),
