@@ -96,7 +96,7 @@ cv.drawContours(conts_temp, temp_cont, -1, (0,255,0), 3)
 conts_post = res.copy()
 cv.drawContours(conts_post, new_cont, -1, (0,255,0), 3)
 
-show = "following"
+show = "save"
 
 if show == "single":
     cv.imshow("Display window", opening)
@@ -131,3 +131,15 @@ if show == "following":
     cv.imshow("Display window2", conts_post)
     cv.imshow("Display window", rect_post)
     k = cv.waitKey(0)
+
+if show == 'save':
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/gray.jpeg", gray)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/threshold.jpeg", th1)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/opening.jpeg", opening)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/median.jpeg", med)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/gaus.jpeg", gaus)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/contours_pre.jpeg", conts_pre)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/contours_temp.jpeg", conts_temp)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/rectangles_temp.jpeg", rect_temp)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/contours_post.jpeg", conts_post)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/rectangles_post.jpeg", rect_post)

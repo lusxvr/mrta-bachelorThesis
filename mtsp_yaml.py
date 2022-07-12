@@ -472,7 +472,7 @@ def main(agents, tasks_single, finish):
     #100 is a magic number because for only one tracked dimension you just need a "large" coefficient
     #If you are tracking different dimensions the individual coefficients have to be adjusted more carefully
     time_dimension.SetGlobalSpanCostCoefficient(100)
-    #routing.SetPrimaryConstrainedDimension(dimension_name)
+    routing.SetPrimaryConstrainedDimension(dimension_name)
     #NOTE: With additional capacity constraints the solver produces different solutions
     #weather you prioritise Individual Total Time or not. With the Span this high, 
     #the solver produces the shortest single distance, but with no given specific Span
