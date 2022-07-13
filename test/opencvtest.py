@@ -1,4 +1,3 @@
-from cgitb import reset
 import cv2 as cv
 import numpy as np
 from matplotlib import pyplot as plt
@@ -10,10 +9,6 @@ res = cv.resize(img,None,fx=0.2, fy=0.2, interpolation = cv.INTER_AREA)
 print(res.shape)
 
 gray = cv.cvtColor(res, cv.COLOR_BGR2GRAY)
-
-hist = cv.calcHist([gray],[0],None,[256],[0,256])
-#plt.plot(hist)
-#plt.show()
 
 ret,th1 = cv.threshold(gray,90,255,cv.THRESH_BINARY)
 
@@ -40,94 +35,83 @@ positions["center"] = []
 positions["area"] = []  
 
 center_coord = []
-center_int = []
 differences = []
 ratio = []
+histogramms = []
+max_intensity = []
 
-#Test
 dict_rec = {}
 dict_rec["x"] = []
 dict_rec["y"] = []
 dict_rec["w"] = []
-dict_rec["h"] = []
-rect_1 = []
-rect_2 = []
-#EndTest   
+dict_rec["h"] = [] 
 
 for i in range(len(temp_cont)):
     cnt = temp_cont[i]
 
+    #Calculating and drawing the Bounding Rectangel
     x,y,w,h = cv.boundingRect(cnt)
     cv.rectangle(rect_temp,(x,y),(x+w,y+h),(0,0,255),2)
 
-    #Test
+    #Calculating and drawing the Center Point of the Rectangle
+    center_coord.append((round(x+(0.5*w)),round(y+(0.5*h))))
+    cv.circle(rect_temp, center_coord[i], 2, (0,0,255), 1)
+
+    #Calculating the Area Difference between Contour and Bounding Rectangle
+    differences.append(abs((w*h)-cv.contourArea(cnt)))
+
+    #Calculating the w/h Ratio of the Bounding Rectangle
+    ratio.append(w/h)
+
+    #Creating the Histogramm for each Bounding Rectangle, normalized withe the area
+    mask = np.zeros(res.shape[:2], np.uint8)
+    mask[y:(y+h), x:(x+w)] = 255
+    masked_img = cv.bitwise_and(res,res,mask = mask)
+    hist_mask = cv.calcHist([gray],[0],mask,[255],[0,256]) / (w*h)
+    histogramms.append(hist_mask)
+    
+    #Calculating which Intensity is the most common in the histogramms
+    max_intensity.append(np.average(np.where(hist_mask == np.amax(hist_mask))[0]))
+
     dict_rec["x"].append(x)
     dict_rec["y"].append(y)
     dict_rec["w"].append(w)
     dict_rec["h"].append(h)
-    #EndTest
 
-    center_coord.append((round(x+(0.5*w)),round(y+(0.5*h))))
-    cv.circle(rect_temp, center_coord[i], 2, (0,0,255), 1)
-
-    #center_int.append(gaus.item(center_coord[i]))
-
-    differences.append(abs((w*h)-cv.contourArea(cnt)))
-
-    ratio.append(w/h)
-
+    #Numbering the Bounding Rectangles
     font = cv.FONT_HERSHEY_SIMPLEX
     cv.putText(rect_temp,str(i),center_coord[i], font, 1,(255,255,255),2,cv.LINE_AA)
 
 print("Area Differences:")
 print(differences)
-print("Center Intensities:")
-print(center_int)
 print("w/h Ratios:")
 print(ratio)
+print("Peaks of Histogramms for Bounding Rectangle of each Contour:")
+print(max_intensity)
 
-#Test
-
-histogramms = []
-
+"""
 for i in range(len(dict_rec["x"])):
     mask = np.zeros(res.shape[:2], np.uint8)
     mask[dict_rec["y"][i]:dict_rec["y"][i]+dict_rec["h"][i], dict_rec["x"][i]:dict_rec["x"][i]+dict_rec["w"][i]] = 255
     masked_img = cv.bitwise_and(res,res,mask = mask)
-    hist_mask = cv.calcHist([gray],[0],mask,[256],[0,256])
+    hist_mask = cv.calcHist([gray],[0],mask,[255],[0,256]) / (dict_rec["w"][i]*dict_rec["h"][i])
     histogramms.append(hist_mask)
+    
+    max_intensity.append(np.average(np.where(hist_mask == np.amax(hist_mask))[0]))
+"""
 
-
-#mask = np.zeros(res.shape[:2], np.uint8)
-#mask[dict_rec["y"][1]:dict_rec["y"][1]+dict_rec["h"][1], dict_rec["x"][1]:dict_rec["x"][1]+dict_rec["w"][1]] = 255
-#masked_img = cv.bitwise_and(res,res,mask = mask)
-
-#hist_mask = cv.calcHist([gray],[0],mask,[256],[0,256])
-
-#mask2 = np.zeros(res.shape[:2], np.uint8)
-#mask2[dict_rec["y"][2]:dict_rec["y"][2]+dict_rec["h"][2], dict_rec["x"][2]:dict_rec["x"][2]+dict_rec["w"][2]] = 255
-#masked_img2 = cv.bitwise_and(res,res,mask = mask2)
-
-#hist_mask2 = cv.calcHist([gray],[0],mask2,[256],[0,256])
-
-#print(np.ptp(hist_mask))
-#print(np.ptp(hist_mask2))
-plt.subplots()
+#Plotting the Histogramms
+#plt.subplots()
 #for i in range(len(histogramms)):
-#    plt.plot(histogramms[i])
-plt.plot(histogramms[1], label='1')
-plt.plot(histogramms[2], label='2')
-plt.legend()
-#plt.plot(hist_mask)
-plt.savefig("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/histogram.png")
-plt.show()
-print(dict_rec)
-#EndTest
+#    plt.plot(histogramms[i], label=i)
+#plt.legend()
+#plt.savefig("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/histogram.png")
+#plt.show()
 
 new_cont = ()
 for i in range(len(temp_cont)):
     cnt = temp_cont[i]
-    if differences[i] < 1000: #and center_int[i] > 200:
+    if differences[i] < 1000 and max_intensity[i] > 100:
         if ratio[i] < 1.1 and ratio[i] > 0.9:
             cont = list(new_cont)
             cont.append(cnt)
@@ -142,6 +126,7 @@ for i in range(len(new_cont)):
     positions["center"].append((round(x+(0.5*w)),round(y+(0.5*h))))
     positions["area"].append(w*h)
 
+print("Final Calculated free spaces:")
 print(positions)
 
 conts_pre = res.copy()
