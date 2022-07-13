@@ -2,103 +2,79 @@ import cv2 as cv
 import numpy as np
 from matplotlib import pyplot as plt
 
+#Reading Image and Preprocessing
 img = cv.imread("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/IMG_1100.jpeg")
-print(img.shape)
 
-res = cv.resize(img,None,fx=0.2, fy=0.2, interpolation = cv.INTER_AREA)
-print(res.shape)
+img_res = cv.resize(img,None,fx=0.2, fy=0.2, interpolation = cv.INTER_AREA)
 
-gray = cv.cvtColor(res, cv.COLOR_BGR2GRAY)
+img_gray = cv.cvtColor(img_res, cv.COLOR_BGR2GRAY)
 
-ret,th1 = cv.threshold(gray,90,255,cv.THRESH_BINARY)
+ret,img_th1 = cv.threshold(img_gray,90,255,cv.THRESH_BINARY)
 
-kernel = np.ones((5,5),np.uint8)
-opening = cv.morphologyEx(th1, cv.MORPH_OPEN, kernel)
+kernel_opening = np.ones((5,5),np.uint8)
+img_open = cv.morphologyEx(img_th1, cv.MORPH_OPEN, kernel_opening)
 
-med = cv.medianBlur(opening, 13)
-gaus = cv.GaussianBlur(med,(5,5),2)
+img_med = cv.medianBlur(img_open, 13)
+img_gaus = cv.GaussianBlur(img_med,(5,5),2)
 
-contours, hierarchy = cv.findContours(gaus, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+#Calculating Contours from Preprocessed Image
+contours_org, hierarchy = cv.findContours(img_gaus, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
-temp_cont = () 
-for i in range(len(contours)):
-    cnt = contours[i]
+#Discarding very big and very small contours
+contours_pre = () 
+for i in range(len(contours_org)):
+    cnt = contours_org[i]
     if cv.contourArea(cnt) > 1500 and cv.contourArea(cnt) < 100000:
-        cont = list(temp_cont)
+        cont = list(contours_pre)
         cont.append(cnt)
-        temp_cont = tuple(cont)
+        contours_pre = tuple(cont)
 
-rect_temp = res.copy()
-
-positions = {}
-positions["center"] = []
-positions["area"] = []  
+#Calculating Metrics to classify remaining candidates
+img_rect_pre = img_res.copy() 
 
 center_coord = []
 differences = []
-ratio = []
+ratios = []
 histogramms = []
 max_intensity = []
 
-dict_rec = {}
-dict_rec["x"] = []
-dict_rec["y"] = []
-dict_rec["w"] = []
-dict_rec["h"] = [] 
-
-for i in range(len(temp_cont)):
-    cnt = temp_cont[i]
+for i in range(len(contours_pre)):
+    cnt = contours_pre[i]
 
     #Calculating and drawing the Bounding Rectangel
     x,y,w,h = cv.boundingRect(cnt)
-    cv.rectangle(rect_temp,(x,y),(x+w,y+h),(0,0,255),2)
+    cv.rectangle(img_rect_pre,(x,y),(x+w,y+h),(0,0,255),2)
 
     #Calculating and drawing the Center Point of the Rectangle
     center_coord.append((round(x+(0.5*w)),round(y+(0.5*h))))
-    cv.circle(rect_temp, center_coord[i], 2, (0,0,255), 1)
+    cv.circle(img_rect_pre, center_coord[i], 2, (0,0,255), 1)
 
     #Calculating the Area Difference between Contour and Bounding Rectangle
     differences.append(abs((w*h)-cv.contourArea(cnt)))
 
     #Calculating the w/h Ratio of the Bounding Rectangle
-    ratio.append(w/h)
+    ratios.append(round((w/h), 4))
 
     #Creating the Histogramm for each Bounding Rectangle, normalized withe the area
-    mask = np.zeros(res.shape[:2], np.uint8)
+    mask = np.zeros(img_res.shape[:2], np.uint8)
     mask[y:(y+h), x:(x+w)] = 255
-    masked_img = cv.bitwise_and(res,res,mask = mask)
-    hist_mask = cv.calcHist([gray],[0],mask,[255],[0,256]) / (w*h)
+    masked_img = cv.bitwise_and(img_res,img_res,mask = mask)
+    hist_mask = cv.calcHist([img_gray],[0],mask,[255],[0,256]) / (w*h)
     histogramms.append(hist_mask)
     
     #Calculating which Intensity is the most common in the histogramms
     max_intensity.append(np.average(np.where(hist_mask == np.amax(hist_mask))[0]))
 
-    dict_rec["x"].append(x)
-    dict_rec["y"].append(y)
-    dict_rec["w"].append(w)
-    dict_rec["h"].append(h)
-
     #Numbering the Bounding Rectangles
     font = cv.FONT_HERSHEY_SIMPLEX
-    cv.putText(rect_temp,str(i),center_coord[i], font, 1,(255,255,255),2,cv.LINE_AA)
+    cv.putText(img_rect_pre,str(i),center_coord[i], font, 1,(255,255,255),2,cv.LINE_AA)
 
 print("Area Differences:")
 print(differences)
 print("w/h Ratios:")
-print(ratio)
+print(ratios)
 print("Peaks of Histogramms for Bounding Rectangle of each Contour:")
 print(max_intensity)
-
-"""
-for i in range(len(dict_rec["x"])):
-    mask = np.zeros(res.shape[:2], np.uint8)
-    mask[dict_rec["y"][i]:dict_rec["y"][i]+dict_rec["h"][i], dict_rec["x"][i]:dict_rec["x"][i]+dict_rec["w"][i]] = 255
-    masked_img = cv.bitwise_and(res,res,mask = mask)
-    hist_mask = cv.calcHist([gray],[0],mask,[255],[0,256]) / (dict_rec["w"][i]*dict_rec["h"][i])
-    histogramms.append(hist_mask)
-    
-    max_intensity.append(np.average(np.where(hist_mask == np.amax(hist_mask))[0]))
-"""
 
 #Plotting the Histogramms
 #plt.subplots()
@@ -108,78 +84,77 @@ for i in range(len(dict_rec["x"])):
 #plt.savefig("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/histogram.png")
 #plt.show()
 
-new_cont = ()
-for i in range(len(temp_cont)):
-    cnt = temp_cont[i]
+#FIltering the Contours according to the calculated metrices
+contours_post = ()
+for i in range(len(contours_pre)):
+    cnt = contours_pre[i]
     if differences[i] < 1000 and max_intensity[i] > 100:
-        if ratio[i] < 1.1 and ratio[i] > 0.9:
-            cont = list(new_cont)
+        if ratios[i] < 1.1 and ratios[i] > 0.9:
+            cont = list(contours_post)
             cont.append(cnt)
-            new_cont = tuple(cont)
+            contours_post = tuple(cont)
 
-rect_post = res.copy()
+#Saving the final Positions
+img_rect_post = img_res.copy()
 
-for i in range(len(new_cont)):
-    cnt = new_cont[i]
+positions = {}
+positions["center"] = []
+positions["area"] = []  
+
+for i in range(len(contours_post)):
+    cnt = contours_post[i]
     x,y,w,h = cv.boundingRect(cnt)
-    cv.rectangle(rect_post,(x,y),(x+w,y+h),(0,0,255),2)
+    cv.rectangle(img_rect_post,(x,y),(x+w,y+h),(0,0,255),2)
     positions["center"].append((round(x+(0.5*w)),round(y+(0.5*h))))
     positions["area"].append(w*h)
 
 print("Final Calculated free spaces:")
 print(positions)
 
-conts_pre = res.copy()
-cv.drawContours(conts_pre, contours, -1, (0,255,0), 3)
-conts_temp = res.copy()
-cv.drawContours(conts_temp, temp_cont, -1, (0,255,0), 3)
-conts_post = res.copy()
-cv.drawContours(conts_post, new_cont, -1, (0,255,0), 3)
+#Drawing the different Contours
+img_contours_org = img_res.copy()
+cv.drawContours(img_contours_org, contours_org, -1, (0,255,0), 3)
+img_contours_pre = img_res.copy()
+cv.drawContours(img_contours_pre, contours_pre, -1, (0,255,0), 3)
+img_contours_post = img_res.copy()
+cv.drawContours(img_contours_post, contours_post, -1, (0,255,0), 3)
 
+#Code to display or save results
 show = ""
 
 if show == "single":
     cv.imshow("Display window", masked_img)
     k = cv.waitKey(0)
 
-if show == "together":
-    titles = ['orginal','Gray Image', 'Global Threshold', 'Median Blur', 'Gaussian Blur', 'Contours Pre', 'Contours Post', 'Rectangles']
-    images = [res, gray, th1, med, gaus, conts_pre, conts_post, rect_post]
-    for i in range(len(images)):
-        plt.subplot(3,3,i+1),plt.imshow(images[i],'gray')
-        plt.title(titles[i])
-        plt.xticks([]),plt.yticks([])
-    plt.show()
-
 if show == "following":
-    cv.imshow("Display window", res)
+    cv.imshow("Display window", img_res)
     k = cv.waitKey(0)
-    cv.imshow("Display window", gray)
+    cv.imshow("Display window", img_gray)
     k = cv.waitKey(0)
-    cv.imshow("Display window", th1)
+    cv.imshow("Display window", img_th1)
     k = cv.waitKey(0) 
-    cv.imshow("Display window", opening)
+    cv.imshow("Display window", img_open)
     k = cv.waitKey(0)
-    cv.imshow("Display window", med)
+    cv.imshow("Display window", img_med)
     k = cv.waitKey(0)
-    cv.imshow("Display window", gaus)
-    cv.imshow("Display window2", conts_pre)
+    cv.imshow("Display window", img_gaus)
+    cv.imshow("Display window2", img_contours_org)
     k = cv.waitKey(0)
-    cv.imshow("Display window2", conts_temp)
-    cv.imshow("Display window", rect_temp)
+    cv.imshow("Display window2", img_contours_pre)
+    cv.imshow("Display window", img_rect_pre)
     k = cv.waitKey(0)
-    cv.imshow("Display window2", conts_post)
-    cv.imshow("Display window", rect_post)
+    cv.imshow("Display window2", img_contours_post)
+    cv.imshow("Display window", img_rect_post)
     k = cv.waitKey(0)
 
 if show == 'save':
-    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/gray.jpeg", gray)
-    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/threshold.jpeg", th1)
-    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/opening.jpeg", opening)
-    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/median.jpeg", med)
-    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/gaus.jpeg", gaus)
-    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/contours_pre.jpeg", conts_pre)
-    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/contours_temp.jpeg", conts_temp)
-    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/rectangles_temp.jpeg", rect_temp)
-    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/contours_post.jpeg", conts_post)
-    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/rectangles_post.jpeg", rect_post)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/gray.jpeg", img_gray)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/threshold.jpeg", img_th1)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/opening.jpeg", img_open)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/median.jpeg", img_med)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/gaus.jpeg", img_gaus)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/contours_org.jpeg", img_contours_org)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/contours_pre.jpeg", img_contours_pre)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/rectangles_pre.jpeg", img_rect_pre)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/contours_post.jpeg", img_contours_post)
+    cv.imwrite("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/rectangles_post.jpeg", img_rect_post)
