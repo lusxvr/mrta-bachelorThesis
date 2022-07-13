@@ -42,7 +42,17 @@ positions["area"] = []
 center_coord = []
 center_int = []
 differences = []
-ratio = []   
+ratio = []
+
+#Test
+dict_rec = {}
+dict_rec["x"] = []
+dict_rec["y"] = []
+dict_rec["w"] = []
+dict_rec["h"] = []
+rect_1 = []
+rect_2 = []
+#EndTest   
 
 for i in range(len(temp_cont)):
     cnt = temp_cont[i]
@@ -50,10 +60,17 @@ for i in range(len(temp_cont)):
     x,y,w,h = cv.boundingRect(cnt)
     cv.rectangle(rect_temp,(x,y),(x+w,y+h),(0,0,255),2)
 
+    #Test
+    dict_rec["x"].append(x)
+    dict_rec["y"].append(y)
+    dict_rec["w"].append(w)
+    dict_rec["h"].append(h)
+    #EndTest
+
     center_coord.append((round(x+(0.5*w)),round(y+(0.5*h))))
     cv.circle(rect_temp, center_coord[i], 2, (0,0,255), 1)
 
-    center_int.append(gaus.item(center_coord[i]))
+    #center_int.append(gaus.item(center_coord[i]))
 
     differences.append(abs((w*h)-cv.contourArea(cnt)))
 
@@ -68,6 +85,44 @@ print("Center Intensities:")
 print(center_int)
 print("w/h Ratios:")
 print(ratio)
+
+#Test
+
+histogramms = []
+
+for i in range(len(dict_rec["x"])):
+    mask = np.zeros(res.shape[:2], np.uint8)
+    mask[dict_rec["y"][i]:dict_rec["y"][i]+dict_rec["h"][i], dict_rec["x"][i]:dict_rec["x"][i]+dict_rec["w"][i]] = 255
+    masked_img = cv.bitwise_and(res,res,mask = mask)
+    hist_mask = cv.calcHist([gray],[0],mask,[256],[0,256])
+    histogramms.append(hist_mask)
+
+
+#mask = np.zeros(res.shape[:2], np.uint8)
+#mask[dict_rec["y"][1]:dict_rec["y"][1]+dict_rec["h"][1], dict_rec["x"][1]:dict_rec["x"][1]+dict_rec["w"][1]] = 255
+#masked_img = cv.bitwise_and(res,res,mask = mask)
+
+#hist_mask = cv.calcHist([gray],[0],mask,[256],[0,256])
+
+#mask2 = np.zeros(res.shape[:2], np.uint8)
+#mask2[dict_rec["y"][2]:dict_rec["y"][2]+dict_rec["h"][2], dict_rec["x"][2]:dict_rec["x"][2]+dict_rec["w"][2]] = 255
+#masked_img2 = cv.bitwise_and(res,res,mask = mask2)
+
+#hist_mask2 = cv.calcHist([gray],[0],mask2,[256],[0,256])
+
+#print(np.ptp(hist_mask))
+#print(np.ptp(hist_mask2))
+plt.subplots()
+#for i in range(len(histogramms)):
+#    plt.plot(histogramms[i])
+plt.plot(histogramms[1], label='1')
+plt.plot(histogramms[2], label='2')
+plt.legend()
+#plt.plot(hist_mask)
+plt.savefig("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/Results/histogram.png")
+plt.show()
+print(dict_rec)
+#EndTest
 
 new_cont = ()
 for i in range(len(temp_cont)):
@@ -96,10 +151,10 @@ cv.drawContours(conts_temp, temp_cont, -1, (0,255,0), 3)
 conts_post = res.copy()
 cv.drawContours(conts_post, new_cont, -1, (0,255,0), 3)
 
-show = "save"
+show = ""
 
 if show == "single":
-    cv.imshow("Display window", opening)
+    cv.imshow("Display window", masked_img)
     k = cv.waitKey(0)
 
 if show == "together":
