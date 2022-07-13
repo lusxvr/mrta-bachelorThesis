@@ -30,16 +30,18 @@ import uuid
 #Vertice Class
 #Instantiated with Position/Location and Demand
 class vertex():
-    def __init__(self, position, demand):
+    def __init__(self, position, demand_small, demand_large):
         self.pos = position
-        self.demand = demand
+        self.demand_small = demand_small
+        self.demand_large = demand_large
 
 #Agent Class inherits from Vertice
 #Instanciated with Position/Location and Capacity, Demand is set to 0
 class agent(vertex):
-    def __init__(self, position, capacity):
-        super().__init__(position, 0)
-        self.capacity = capacity
+    def __init__(self, position, capacity_small, capacity_large):
+        super().__init__(position, 0, 0)
+        self.capacity_small = capacity_small
+        self.capacity_large = capacity_large
 
 #Task Class inherits from Vertice
 #Instanciated with Position/Location, Demand and Collaboration Index
@@ -48,8 +50,8 @@ class agent(vertex):
 #Task with Index 2 collaborates with other Task with Index 2 and so on
 #Task with Index 0 does not need collaboration
 class task(vertex):
-    def __init__(self, position, demand, collab):
-        super().__init__(position, demand)
+    def __init__(self, position, demand_small, demand_large, collab):
+        super().__init__(position, demand_small, demand_large)
         self.collab = collab
 #---End Classes------------------------------------------------------------------------------------
 
@@ -113,14 +115,22 @@ def create_data_model(agents, tasks, finish):
     data['num_agents'] = len(agents)
     
     #Defining the Demands for the Tasks
-    data['demands'] = []
+    data['demands_small'] = []
     for i in range(len(vertices)):
-        data['demands'].append(vertices[i].demand)
+        data['demands_small'].append(vertices[i].demand_small)
+
+    data['demands_large'] = []
+    for i in range(len(vertices)):
+        data['demands_large'].append(vertices[i].demand_large)
 
     #Defining the Capacities of the Agents
-    data['capacities'] = []
+    data['capacities_small'] = []
     for i in range(len(agents)):
-        data['capacities'].append(agents[i].capacity)
+        data['capacities_small'].append(agents[i].capacity_small)
+
+    data['capacities_large'] = []
+    for i in range(len(agents)):
+        data['capacities_large'].append(agents[i].capacity_large)
 
     #Checking for requested Collaborations
     #Only collaborations between two agents are possible
@@ -146,7 +156,8 @@ def get_routes(data, solution, routing, manager, time_dimension):
     routes = {}
     routes['paths'] = []
     routes['costs'] = []
-    routes['loads'] = []
+    routes['loads_small'] = []
+    routes['loads_large'] = []
     routes['mov_times'] = []
     routes['total_times'] = []
     routes['vertice_times'] = []
@@ -159,7 +170,8 @@ def get_routes(data, solution, routing, manager, time_dimension):
         path = [manager.IndexToNode(index)]
         #Initialising variables as 0 for each new calculated route
         cost = 0
-        load = 0
+        load_small = 0
+        load_large = 0
         mov_time = 0
         total_time = 0
         vertice_times = []
@@ -179,7 +191,8 @@ def get_routes(data, solution, routing, manager, time_dimension):
             #Adding the cost for transit between the previous and new node for the respective agent/route to the total cost
             cost += routing.GetArcCostForVehicle(previous_index, index, route_nbr)
             #Adding the demand of the new node to the total load
-            load += data['demands'][manager.IndexToNode(index)]
+            load_small += data['demands_small'][manager.IndexToNode(index)]
+            load_large += data['demands_large'][manager.IndexToNode(index)]
             #Adding the time taken between the previous and new node to the total moving time
             mov_time += data['global_time_matrix'][manager.IndexToNode(previous_index)][manager.IndexToNode(index)]
             #Getting the cum value of the time dimension and adding the time windows for the new node
@@ -191,16 +204,12 @@ def get_routes(data, solution, routing, manager, time_dimension):
         #Appending the final lists/values to the routes list after finishing the single route
         routes['paths'].append(path)
         routes['costs'].append(cost)
-        routes['loads'].append(load)
+        routes['loads_small'].append(load_small)
+        routes['loads_large'].append(load_large)
         routes['mov_times'].append(mov_time)
         routes['total_times'].append(total_time)
         routes['vertice_times'].append(vertice_times)
         routes['transit_times'].append(transit_times)
-    
-    #Writes routes dict to a json file
-    #json_object = json.dumps(routes, indent = 4)
-    #with open('routes.json', 'w') as newfile:
-    #    newfile.write(json_object)
     return routes
 
 def write_json(routes):
@@ -400,7 +409,7 @@ def main(agents, tasks_single, finish):
         tasks.append(tasks_single[i])
         if tasks_single[i].collab:
             pos = tasks_single[i].pos
-            tasks.append(task([pos[0]+1, pos[1]+1, pos[2]+1], 0, tasks_single[i].collab))
+            tasks.append(task([pos[0]+1, pos[1]+1, pos[2]+1], 0, 0, tasks_single[i].collab))
     
     #Creating the Data Model
     data = create_data_model(agents, tasks, finish)
@@ -482,21 +491,38 @@ def main(agents, tasks_single, finish):
     #make the solver significantly slower (or search infinite) but produce a slightly lower
     #individual maximal time
     
-    #Creating Demand Callback for the Solver
-    def demand_callback(from_index):
+    #Creating Small Demand Callback for the Solver
+    def small_demand_callback(from_index):
         from_node = manager.IndexToNode(from_index)
-        return data['demands'][from_node]
+        return data['demands_small'][from_node]
 
-    #Creating and an Transit Callback ID for the solver/model from the demand callback
-    demand_callback_index = routing.RegisterUnaryTransitCallback(demand_callback)
+    #Creating and an Transit Callback ID for the solver/model from the small demand callback
+    small_demand_callback_index = routing.RegisterUnaryTransitCallback(small_demand_callback)
 
     #Adding Capacity Dimension
     routing.AddDimensionWithVehicleCapacity(
-        demand_callback_index, 
+        small_demand_callback_index, 
         0, 
-        data['capacities'],                 #Setting the maximum allowed value of the dimension to the maximum capacities of the vehicles
+        data['capacities_small'],                 #Setting the maximum allowed value of the dimension to the maximum capacities of the vehicles
         True, 
-        'Capacity'
+        'Capacity_Small'
+    )    
+
+    #Creating Large Demand Callback for the Solver
+    def large_demand_callback(from_index):
+        from_node = manager.IndexToNode(from_index)
+        return data['demands_large'][from_node]
+
+    #Creating and an Transit Callback ID for the solver/model from the large demand callback
+    large_demand_callback_index = routing.RegisterUnaryTransitCallback(large_demand_callback)
+
+    #Adding Capacity Dimension
+    routing.AddDimensionWithVehicleCapacity(
+        large_demand_callback_index, 
+        0, 
+        data['capacities_large'],                 #Setting the maximum allowed value of the dimension to the maximum capacities of the vehicles
+        True, 
+        'Capacity_Large'
     )    
 
     #Creating the Search Parameters for the Solver
@@ -522,32 +548,32 @@ def main(agents, tasks_single, finish):
         for i in range(len(routes['paths'])):
             print('Route', i)
             print('Path: ', routes['paths'][i], '| Vertice Times:', routes['vertice_times'][i], '| Transit Times:', routes['transit_times'][i])
-            print('Cost:', routes['costs'][i], '| Load:', routes['loads'][i], '| Moving Time:', routes['mov_times'][i], '| Total Time:', routes['total_times'][i])
+            print('Cost:', routes['costs'][i], '| Load Small:', routes['loads_small'][i] , '| Load Large:', routes['loads_large'][i], '| Moving Time:', routes['mov_times'][i], '| Total Time:', routes['total_times'][i])
             print()
     else:
         print('No Solution found')
         return 1
 
 if __name__ == '__main__':
-    #Initiating the agents with position and capacity
+    #Initiating the agents with position and capacity for small and large bottles
     agents = [
-        agent([-5, -1, 0], 6),
-        agent([3, -1, 2], 6),
+        agent([-5, -1, 0], 4, 2),
+        agent([3, -1, 2], 4, 2),
     ]
 
-    #Initiating the tasks with position, demand, and collaboration -> task(position, demand, collab)
+    #Initiating the tasks with position, demand small, demand large, and collaboration -> task(position, demand small, demand large, collab)
     #If a task requires collaboration a second task will be added behind the requesting task by the data function
     #Collaborative Tasks will be next to another since this is the way the
     #function will implement them and since it is also just easier to check for them afterwards
     tasks = [
-        task([-8, 6, 4], 2, 0),
-        task([-6, -6, -3], 3, 0),
-        task([-2, 3, -7], 4, 0),    #1 is indicating first needed collaboration
-        task([6, -5, -8], 1, 0),
-        task([8, 5, 6], 2, 0),     #2 in indicating second needed collaboration
+        task([-8, 6, 4], 1, 0, 0),
+        task([-6, -6, -3], 1, 0, 0),
+        task([-2, 3, -7], 1, 0, 0),    #1 is indicating first needed collaboration
+        task([6, -5, -8], 0, 1, 0),
+        task([8, 5, 6], 0, 1, 0),     #2 in indicating second needed collaboration
     ]
 
-    #Initiating the finish position with location and demand 0
-    finish = vertex([0, 0, 0], 0)
+    #Initiating the finish position with location and demands 0
+    finish = vertex([0, 0, 0], 0, 0)
 
     main(agents, tasks, finish)
