@@ -10,6 +10,10 @@ File Structure follows a complexity evolution:
 
 basic -> ... + capacities -> ... + time windows -> ... + individual agent costs -> ... + json output -> ... + yaml output
 
+The old versions with the task allocation algorithm in a lower complexity are in /oldVersions
+
+The current and most recent file is mtsp_main.py
+
 
 ## Json Output
 
