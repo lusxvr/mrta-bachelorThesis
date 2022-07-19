@@ -31,7 +31,8 @@ import sys
 #Vertice Class
 #Instantiated with Position/Location and Demand
 class vertex():
-    def __init__(self, position, demand_small, demand_large):
+    def __init__(self, id, position, demand_small, demand_large):
+        self.id = id
         self.pos = position
         self.demand_small = demand_small
         self.demand_large = demand_large
@@ -39,8 +40,8 @@ class vertex():
 #Agent Class inherits from Vertice
 #Instanciated with Position/Location and Capacity, Demand is set to 0
 class agent(vertex):
-    def __init__(self, position, capacity_small, capacity_large):
-        super().__init__(position, 0, 0)
+    def __init__(self, id, position, capacity_small, capacity_large):
+        super().__init__(id, position, 0, 0)
         self.capacity_small = capacity_small
         self.capacity_large = capacity_large
 
@@ -51,8 +52,8 @@ class agent(vertex):
 #Task with Index 2 collaborates with other Task with Index 2 and so on
 #Task with Index 0 does not need collaboration
 class task(vertex):
-    def __init__(self, position, demand_small, demand_large, collab):
-        super().__init__(position, demand_small, demand_large)
+    def __init__(self, id, position, demand_small, demand_large, collab):
+        super().__init__(id, position, demand_small, demand_large)
         self.collab = collab
 #---End Classes------------------------------------------------------------------------------------
 
@@ -77,6 +78,10 @@ def create_data_model(agents, tasks, finish):
     
     #Creating empty Global Travel Time Matrix
     data = {}
+    data['IDs']= []
+    for i in range(len(vertices)):
+        data['IDs'].append(vertices[i].id)
+
     data['global_time_matrix'] = []
     for i in range(len(vertices)):
         data['global_time_matrix'].append([])
@@ -168,7 +173,7 @@ def get_routes(data, solution, routing, manager, time_dimension):
         #Starting Index of current route
         index = routing.Start(route_nbr)
         #Initialising path list with the first Vertex (Node)
-        path = [manager.IndexToNode(index)]
+        path = [data['IDs'][manager.IndexToNode(index)]]
         #Initialising variables as 0 for each new calculated route
         cost = 0
         load_small = 0
@@ -188,7 +193,7 @@ def get_routes(data, solution, routing, manager, time_dimension):
             #Getting the new node
             index = solution.Value(routing.NextVar(index))
             #Appending the new node to the path
-            path.append(manager.IndexToNode(index))
+            path.append(data['IDs'][manager.IndexToNode(index)])
             #Adding the cost for transit between the previous and new node for the respective agent/route to the total cost
             cost += routing.GetArcCostForVehicle(previous_index, index, route_nbr)
             #Adding the demand of the new node to the total load
@@ -287,7 +292,7 @@ def write_yaml(routes):
         return string
 
     #Opening the Template
-    with open('/home/ge29kik/Software/labskilldeveloper/scripts/python/mrta-bachelorsThesis/template.yaml') as f:
+    with open('C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/template.yaml') as f:
         
         template = yaml.full_load(f)
 
@@ -301,8 +306,8 @@ def write_yaml(routes):
         max_len = max(len(path), max_len)
 
     #Declaring the running variables
-    i = 0
-    j = 0
+    i = 1
+    j = 1
     k = 0
     x = 1
     y = 1
@@ -319,11 +324,11 @@ def write_yaml(routes):
             cart_pose_travel['UID'] = str(uuid.uuid4())
             #Configuring the BasePose
             base_pose['IP'] = '192.168.1.104'
-            base_pose['PosName'] = 'PosTask_%s' %identifier
+            base_pose['PosName'] = identifier                   #'PosTask_%s' %
             base_pose['UID'] = str(uuid.uuid4())
             #Configuring the CartPose
             cart_pose['IP'] = '192.168.1.104'
-            cart_pose['PosName'] = 'PosTask_%s' %identifier
+            cart_pose['PosName'] = identifier                   #'PosTask_%s' %
             cart_pose['UID'] = str(uuid.uuid4())
             #Collapsing the Poses to strings
             string_cart_travel = collapse_dict_to_string(cart_pose_travel)
@@ -359,11 +364,11 @@ def write_yaml(routes):
             cart_pose_travel['UID'] = str(uuid.uuid4())
             #Configuring the BasePose
             base_pose['IP'] = '192.168.2.105'
-            base_pose['PosName'] = 'PosTask_%s' %identifier
+            base_pose['PosName'] = identifier                       #'PosTask_%s' %
             base_pose['UID'] = str(uuid.uuid4())
             #Configuring the CartPose
             cart_pose['IP'] = '192.168.2.105'
-            cart_pose['PosName'] = 'PosTask_%s' %identifier
+            cart_pose['PosName'] = identifier                       #'PosTask_%s' %
             cart_pose['UID'] = str(uuid.uuid4())
             #Collapsing the poses to strings
             string_cart_travel = collapse_dict_to_string(cart_pose_travel)
@@ -459,12 +464,12 @@ def main(agents, tasks_single, finish):
     #This is nececary to minimize the biggest individual time for the agents
     dimension_name = 'Time'
     routing.AddDimension(
-        global_transit_callback_index,     #Setting Callback for the Dimension
-        100,                                #Setting Slack Variable for the Dimension (Allowed waiting time)
-        10000,                               #Setting total quantity which can be amounted along each route
-        True,                              #Weather the value HAS to start at zero or not
-        dimension_name)                    #Name/Identifier for the Dimension
-    
+        global_transit_callback_index,                          #Setting Callback for the Dimension
+        10000,                                                  #Setting Slack Variable for the Dimension (Allowed waiting time)
+        sum(map(sum, data["global_time_matrix"])),              #Setting total quantity which can be amounted along each route, is set to sum of entries of golbal time matrix
+        True,                                                   #Weather the value HAS to start at zero or not
+        dimension_name)                                         #Name/Identifier for the Dimension
+
     #Getting the Dimension Identifier from the routing model
     time_dimension = routing.GetDimensionOrDie(dimension_name)
     
@@ -558,10 +563,11 @@ if __name__ == '__main__':
     #args = sys.argv
     #globals()[args[1]](*args[2:])
     #Initiating the agents with position and capacity for small and large bottles
-    with open('/home/ge29kik/Software/labskilldeveloper/scripts/python/mrta-bachelorsThesis/poses.yaml') as f:
+    with open('C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/poses.yaml') as f:
         poses = yaml.full_load(f)
-    agents = [agent(poses["Agents"][poses["AgentIDs"][i]], 4, 2) for i in range(len(poses["AgentIDs"]))]
-    print([poses["Agents"][poses["AgentIDs"][i]]for i in range(len(poses["AgentIDs"]))])
+    agents = [agent(poses["AgentIDs"][i], poses["Agents"][poses["AgentIDs"][i]], 4, 2) for i in range(len(poses["AgentIDs"]))]
+    #print([poses["Agents"][poses["AgentIDs"][i]] for i in range(len(poses["AgentIDs"]))])
+
     # agents = [
     #    agent([-5, -1, 0], 4, 2),
     #    agent([3, -1, 2], 4, 2),
@@ -571,8 +577,10 @@ if __name__ == '__main__':
     #If a task requires collaboration a second task will be added behind the requesting task by the data function
     #Collaborative Tasks will be next to another since this is the way the
     #function will implement them and since it is also just easier to check for them afterwards
-    tasks = [task(poses["Tasks"][poses["TaskIDs"][i]], 0, 1, 0) for i in range(len(poses["TaskIDs"]))]
-    print([poses["Tasks"][poses["TaskIDs"][i]]for i in range(len(poses["TaskIDs"]))])
+    tasks = [task(poses["TaskIDs"][i], poses["Tasks"][poses["TaskIDs"][i]], 0, 1, 0) for i in range(len(poses["TaskIDs"]))]
+    #print([poses["Tasks"][poses["TaskIDs"][i]] for i in range(len(poses["TaskIDs"]))])
+    #print(poses["TaskIDs"])
+
     # tasks = [
     #    task([-55, 6, 4], 1, 0, 0),
     #    task([-6, -6, -3], 1, 0, 0),
@@ -581,9 +589,9 @@ if __name__ == '__main__':
     #    task([8, 5, 6], 0, 1, 0),     #2 in indicating second needed collaboration
     # ]
 
-    #Initiating the finish position with location and demands 0
-    finish = vertex(poses["Finish"], 0, 0)
+    #Initiating the finish position with id, location and demands 0
+    finish = vertex(0, poses["Finish"], 0, 0)
     # finish = vertex([0,0,0], 0, 0)
-    print(poses["Finish"])
+    #print(poses["Finish"])
 
     main(agents, tasks, finish)
