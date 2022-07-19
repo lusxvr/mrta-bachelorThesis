@@ -24,6 +24,7 @@ import math
 import json
 import yaml
 import uuid
+import sys
 #---End Import-------------------------------------------------------------------------------------
 
 #---Beginn Classes---------------------------------------------------------------------------------
@@ -286,7 +287,7 @@ def write_yaml(routes):
         return string
 
     #Opening the Template
-    with open('template.yaml') as f:
+    with open('/home/ge29kik/Software/labskilldeveloper/scripts/python/mrta-bachelorsThesis/template.yaml') as f:
         
         template = yaml.full_load(f)
 
@@ -459,8 +460,8 @@ def main(agents, tasks_single, finish):
     dimension_name = 'Time'
     routing.AddDimension(
         global_transit_callback_index,     #Setting Callback for the Dimension
-        10,                                #Setting Slack Variable for the Dimension (Allowed waiting time)
-        100,                               #Setting total quantity which can be amounted along each route
+        100,                                #Setting Slack Variable for the Dimension (Allowed waiting time)
+        10000,                               #Setting total quantity which can be amounted along each route
         True,                              #Weather the value HAS to start at zero or not
         dimension_name)                    #Name/Identifier for the Dimension
     
@@ -553,27 +554,36 @@ def main(agents, tasks_single, finish):
     else:
         print('No Solution found')
         return 1
-
 if __name__ == '__main__':
+    #args = sys.argv
+    #globals()[args[1]](*args[2:])
     #Initiating the agents with position and capacity for small and large bottles
-    agents = [
-        agent([-5, -1, 0], 4, 2),
-        agent([3, -1, 2], 4, 2),
-    ]
+    with open('/home/ge29kik/Software/labskilldeveloper/scripts/python/mrta-bachelorsThesis/poses.yaml') as f:
+        poses = yaml.full_load(f)
+    agents = [agent(poses["Agents"][poses["AgentIDs"][i]], 4, 2) for i in range(len(poses["AgentIDs"]))]
+    print([poses["Agents"][poses["AgentIDs"][i]]for i in range(len(poses["AgentIDs"]))])
+    # agents = [
+    #    agent([-5, -1, 0], 4, 2),
+    #    agent([3, -1, 2], 4, 2),
+    # ]
 
     #Initiating the tasks with position, demand small, demand large, and collaboration -> task(position, demand small, demand large, collab)
     #If a task requires collaboration a second task will be added behind the requesting task by the data function
     #Collaborative Tasks will be next to another since this is the way the
     #function will implement them and since it is also just easier to check for them afterwards
-    tasks = [
-        task([-8, 6, 4], 1, 0, 0),
-        task([-6, -6, -3], 1, 0, 0),
-        task([-2, 3, -7], 1, 0, 0),    #1 is indicating first needed collaboration
-        task([6, -5, -8], 0, 1, 0),
-        task([8, 5, 6], 0, 1, 0),     #2 in indicating second needed collaboration
-    ]
+    tasks = [task(poses["Tasks"][poses["TaskIDs"][i]], 0, 1, 0) for i in range(len(poses["TaskIDs"]))]
+    print([poses["Tasks"][poses["TaskIDs"][i]]for i in range(len(poses["TaskIDs"]))])
+    # tasks = [
+    #    task([-55, 6, 4], 1, 0, 0),
+    #    task([-6, -6, -3], 1, 0, 0),
+    #    task([-2, 3, -7], 1, 0, 0),    #1 is indicating first needed collaboration
+    #    task([6, -5, -8], 0, 1, 0),
+    #    task([8, 5, 6], 0, 1, 0),     #2 in indicating second needed collaboration
+    # ]
 
     #Initiating the finish position with location and demands 0
-    finish = vertex([0, 0, 0], 0, 0)
+    finish = vertex(poses["Finish"], 0, 0)
+    # finish = vertex([0,0,0], 0, 0)
+    print(poses["Finish"])
 
     main(agents, tasks, finish)
