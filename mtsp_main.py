@@ -462,11 +462,15 @@ def main(agents, tasks_single, finish):
     #The solver needs dimensions to keep track of quantities accumulated by the agents through their path
     #The Time Dimension tracks the current total travel time of each Agent 
     #This is nececary to minimize the biggest individual time for the agents
+    max_time_capacity = sum(map(sum, data["global_time_matrix"]))
+    if max_time_capacity.bit_length() > 63:
+        raise ValueError('Desired Path is too long for internal variable data types, split commanded tasks into subgroups and run again')
+        
     dimension_name = 'Time'
     routing.AddDimension(
         global_transit_callback_index,                          #Setting Callback for the Dimension
         10000,                                                  #Setting Slack Variable for the Dimension (Allowed waiting time)
-        sum(map(sum, data["global_time_matrix"])),              #Setting total quantity which can be amounted along each route, is set to sum of entries of golbal time matrix
+        max_time_capacity,                                      #Setting total quantity which can be amounted along each route, is set to sum of entries of golbal time matrix
         True,                                                   #Weather the value HAS to start at zero or not
         dimension_name)                                         #Name/Identifier for the Dimension
 
