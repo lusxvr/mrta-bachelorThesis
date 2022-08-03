@@ -3,15 +3,15 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 #Reading Image and Preprocessing
-img = cv.imread("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/IMG_1100.jpeg")
+img_res = cv.imread("C:/Users/luisw/Studium/TUM Maschinenwesen/6. Semester/Bachelorarbeit/Algorithmen/mrta-bachelorThesis/test/Images/gray_image_943222070069.png")
 
-img_res = cv.resize(img,None,fx=0.2, fy=0.2, interpolation = cv.INTER_AREA)
+#img_res = cv.resize(img,None,fx=0.2, fy=0.2, interpolation = cv.INTER_AREA)
 
 img_gray = cv.cvtColor(img_res, cv.COLOR_BGR2GRAY)
 
-ret,img_th1 = cv.threshold(img_gray,90,255,cv.THRESH_BINARY)
+ret,img_th1 = cv.threshold(img_gray,110,255,cv.THRESH_BINARY)
 
-kernel_opening = np.ones((5,5),np.uint8)
+kernel_opening = np.ones((5,5),np.uint8) 
 img_open = cv.morphologyEx(img_th1, cv.MORPH_OPEN, kernel_opening)
 
 img_med = cv.medianBlur(img_open, 13)
@@ -24,8 +24,8 @@ contours_org, hierarchy = cv.findContours(img_gaus, cv.RETR_TREE, cv.CHAIN_APPRO
 contours_pre = () 
 for i in range(len(contours_org)):
     cnt = contours_org[i]
-    if cv.contourArea(cnt) > 1500 and cv.contourArea(cnt) < 100000:
-        cont = list(contours_pre)
+    if cv.contourArea(cnt) > 10000 and cv.contourArea(cnt) < 100000:
+        cont = list(contours_pre) 
         cont.append(cnt)
         contours_pre = tuple(cont)
 
@@ -88,7 +88,7 @@ print(max_intensity)
 contours_post = ()
 for i in range(len(contours_pre)):
     cnt = contours_pre[i]
-    if differences[i] < 1000 and max_intensity[i] > 100:
+    if differences[i] < 2000 and max_intensity[i] > 100:
         if ratios[i] < 1.1 and ratios[i] > 0.9:
             cont = list(contours_post)
             cont.append(cnt)
@@ -120,7 +120,7 @@ img_contours_post = img_res.copy()
 cv.drawContours(img_contours_post, contours_post, -1, (0,255,0), 3)
 
 #Code to display or save results
-show = ""
+show = "following"
 
 if show == "single":
     cv.imshow("Display window", masked_img)

@@ -14,6 +14,14 @@ The old versions with the task allocation algorithm in a lower complexity are in
 
 The current and most recent file is mtsp_main.py
 
+For evaluation, the eval_algo.py is used. This runns, a random generated scenario with a specified amount of tasks for a specified amount of iterations. Three different allocation algorithms are compared: random allocation, nearest neighbour allocation and the developed allocation using OR-Tools. It creates json files with the calculated route distance for each agent for each approach for the number of iterations.
+
+File Structure: [[[mrta_iter1_r1, mrta_iter1_r2],[rand_iter1_r1, rand_iter1_r2],[nn_iter1_r1, nn_iter1_r2]], [... for iter2], ...]
+
+Naming Structure: dayofyear_hour_min_sec_numtasks_numiter.json
+
+To calculate metrics and visualisation from the data, data_analysis_benchmarks.py is used. 
+
 
 ## Json Output
 
