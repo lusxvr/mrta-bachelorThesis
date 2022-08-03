@@ -322,7 +322,7 @@ def write_yaml(routes, data):
 
     #Creating an empty list for appending the tasks
     template['dual-arm']['MRTA'] = []
-    task_list = []
+    task_list_release = []
 
     #Finding the max length of allocated vertices
     max_len = 0
@@ -339,11 +339,9 @@ def write_yaml(routes, data):
     #While the longest route is not finished
     while k < max_len:
         #Looping over the first path
-        if i < len(routes['paths'][0]):
+        if i < len(routes['paths'][0])-1:
             identifier = str(routes['paths'][0][i])
             index = data['IDs'].index(routes['paths'][0][i])
-            if identifier == '0':
-                identifier = '00'
             #Configuring the JointPose for Travel
             joint_pose['IP'] = '192.168.1.104'
             joint_pose['PosName'] = 'TravelPose'
@@ -403,6 +401,11 @@ def write_yaml(routes, data):
             string_cart_release = collapse_dict_to_string(cart_pose)
             cart_pose['finger_width'] = '-1.0000'
             cart_pose['finger_speed'] = '0.0000'
+            #Configuring the CartPose to move to end position
+            cart_pose['IP'] = '192.168.1.104'
+            cart_pose['PosName'] = '00'                   #'PosTask_%s' %
+            cart_pose['UID'] = str(uuid.uuid4())
+            string_cart_move_end = collapse_dict_to_string(cart_pose)
             #Appending the strings to the file
             template['dual-arm']['MRTA'].append(string_joint_travel)
             template['dual-arm']['MRTA'].append(string_base) 
@@ -414,6 +417,10 @@ def write_yaml(routes, data):
             template['dual-arm']['MRTA'].append(string_gripper_grasp)
             template['dual-arm']['MRTA'].append(string_joint_storing)
             template['dual-arm']['MRTA'].append(string_cart_release)
+            task_list_release.append(string_joint_storing)
+            task_list_release.append(string_gripper_grasp)
+            task_list_release.append(string_cart_move_end)
+            task_list_release.append(string_cart_release)
             #Checking if there is waiting time between two tasks
             if x < len(routes['paths'][0]):
                 wait_time = routes['vertice_times'][0][x] - routes['vertice_times'][0][x-1] - routes['transit_times'][0][x-1]
@@ -427,7 +434,7 @@ def write_yaml(routes, data):
                 x += 1
             i += 1
         #Looping over the second path
-        if j < len(routes['paths'][1]):
+        if j < len(routes['paths'][1])-1:
             identifier = str(routes['paths'][1][j])
             index = data['IDs'].index(routes['paths'][1][j])
             if identifier == '0':
@@ -491,6 +498,11 @@ def write_yaml(routes, data):
             string_cart_release = collapse_dict_to_string(cart_pose)
             cart_pose['finger_width'] = '-1.0000'
             cart_pose['finger_speed'] = '0.0000'
+            #Configuring the CartPose to move to end position
+            cart_pose['IP'] = '192.168.2.105'
+            cart_pose['PosName'] = '01'                   #'PosTask_%s' %
+            cart_pose['UID'] = str(uuid.uuid4())
+            string_cart_move_end = collapse_dict_to_string(cart_pose)
             #Appending the strings to the file
             template['dual-arm']['MRTA'].append(string_joint_travel)
             template['dual-arm']['MRTA'].append(string_base) 
@@ -502,6 +514,10 @@ def write_yaml(routes, data):
             template['dual-arm']['MRTA'].append(string_gripper_grasp)
             template['dual-arm']['MRTA'].append(string_joint_storing)
             template['dual-arm']['MRTA'].append(string_cart_release)
+            task_list_release.append(string_joint_storing)
+            task_list_release.append(string_gripper_grasp)
+            task_list_release.append(string_cart_move_end)
+            task_list_release.append(string_cart_release)
             #Checking if there is waiting time between the tasks
             if y < len(routes['paths'][1]):
                 wait_time = routes['vertice_times'][1][y] - routes['vertice_times'][1][y-1] - routes['transit_times'][1][y-1]
@@ -511,14 +527,47 @@ def write_yaml(routes, data):
                     hold_pose['Time'] = str(wait_time)
                     hold_pose['UID'] = str(uuid.uuid4())
                     string_hold = collapse_dict_to_string(hold_pose)
-                    task_list.append(string_hold)
                     template['dual-arm']['MRTA'].append(string_hold)
                 y += 1
             j += 1
         k += 1
 
+    #Configuring the JointPose for Travel
+    joint_pose['IP'] = '192.168.2.105'
+    joint_pose['PosName'] = 'TravelPose'
+    joint_pose['UID'] = str(uuid.uuid4())
+    string_joint_travel = collapse_dict_to_string(joint_pose)
+    #configure the Base Pose for End Position
+    base_pose['IP'] = '192.168.2.105'
+    base_pose['PosName'] = '01'                   #'PosTask_%s' %
+    base_pose['UID'] = str(uuid.uuid4())
+    string_base = collapse_dict_to_string(base_pose)
+    #Appending to release list
+    task_list_release.insert(0, string_base)
+    task_list_release.insert(0, string_joint_travel)
+
+    task_list_release.append(string_joint_travel)
+
+    #Configuring the JointPose for Travel
+    joint_pose['IP'] = '192.168.1.104'
+    joint_pose['PosName'] = 'TravelPose'
+    joint_pose['UID'] = str(uuid.uuid4())
+    string_joint_travel = collapse_dict_to_string(joint_pose)
+    #configure the Base Pose for End Position
+    base_pose['IP'] = '192.168.1.104'
+    base_pose['PosName'] = '00'                   #'PosTask_%s' %
+    base_pose['UID'] = str(uuid.uuid4())
+    string_base = collapse_dict_to_string(base_pose)
+    #Appending to release list
+    task_list_release.insert(0, string_base)
+    task_list_release.insert(0, string_joint_travel)
+
+    task_list_release.append(string_joint_travel)
+
+    #Merging the storing and releasing lists
+    template['dual-arm']['MRTA'] += task_list_release
+
     #Appending the Stop
-    task_list.append('Stop')
     template['dual-arm']['MRTA'].append('Stop')
 
     #Dumping the generated sequence to a yaml file
