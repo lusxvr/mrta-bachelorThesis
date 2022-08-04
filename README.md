@@ -54,21 +54,21 @@ Creates skills.yaml file which holds the generated string sequence for executing
 One assigned Task is splitted into Skills:
 
 For Pickup:
--JointPose TravelPose
--BasePose
--JointPose workbench_scan_pose
--UpdateObjectPose
--JointPose storage_scan_pose
--UpdateStorage
--CartPose (Obj greifen)
--Gripper
--JointPose (Einlager)
--CartPose (Gripper release)
+1. JointPose TravelPose
+2. BasePose
+3. JointPose workbench_scan_pose
+4. UpdateObjectPose
+5. JointPose storage_scan_pose
+6. UpdateStorage
+7. CartPose (Obj greifen)
+8. Gripper
+9. JointPose (Einlager)
+10. CartPose (Gripper release)
 
 For Dropoff:
--JointPose (zu obj in lager)
--Gripper
--CartPose (zu Endlocation)
--CartPose (Gripper release)
+1. JointPose (zu obj in lager) [Pickup 9]
+2. Gripper [Pickup 8]
+3. CartPose (zu Endlocation)
+4. CartPose (Gripper release)
 
 Pickup and Dropoff Skills are generated together, saved to different lists and merged at the end to create the correct sequence in one go
