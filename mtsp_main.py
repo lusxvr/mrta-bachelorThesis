@@ -61,10 +61,10 @@ class task(vertex):
 #ATM the cost is just the distance between points, with a distortion for each agent so the costs are different
 #TODO: Implementing sophisticated cost functions
 def cost_fkt_agent_0(vert_1, vert_2):
-    return round(math.dist(vert_1.pos, vert_2.pos))+1
+    return round(math.dist(vert_1.pos, vert_2.pos))
 
 def cost_fkt_agent_1(vert_1, vert_2):
-    return round(math.dist(vert_1.pos, vert_2.pos))-1
+    return round(math.dist(vert_1.pos, vert_2.pos))
 
 #Creation of the Data Model for the Solver from the defined Agents and Tasks-----------------------
 def create_data_model(agents, tasks, finish):
