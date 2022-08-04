@@ -51,8 +51,24 @@ Make sure to have template.yaml in the directory
 
 Creates skills.yaml file which holds the generated string sequence for executing the tasks with the robots
 
-One assigned Task is splitted into 3 Skills:
+One assigned Task is splitted into Skills:
 
-1. Move to neutral Pose for Base Movement
-2. New Base Pose
-3. New Cart Pose
+For Pickup:
+-JointPose TravelPose
+-BasePose
+-JointPose workbench_scan_pose
+-UpdateObjectPose
+-JointPose storage_scan_pose
+-UpdateStorage
+-CartPose (Obj greifen)
+-Gripper
+-JointPose (Einlager)
+-CartPose (Gripper release)
+
+For Dropoff:
+-JointPose (zu obj in lager)
+-Gripper
+-CartPose (zu Endlocation)
+-CartPose (Gripper release)
+
+Pickup and Dropoff Skills are generated together, saved to different lists and merged at the end to create the correct sequence in one go
