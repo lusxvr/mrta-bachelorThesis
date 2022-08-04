@@ -379,9 +379,9 @@ def write_yaml(routes, data):
             string_cart_move_obj = collapse_dict_to_string(cart_pose)
             #Configuring the Gripper to grip the object
             gripper_grasp['IP'] = '192.168.1.104'
-            if data['demands_small'][index]:
+            if int(identifier) in [30,31,32,33,34,35,36,37,38,39]:                    #data['demands_small'][index]
                 gripper_grasp['width'] = '0.0304'
-            elif data['demands_large'][index]:
+            elif int(identifier) in [40,41,42,43,44,45,46]:                           #data['demands_large'][index]
                 gripper_grasp['width'] = '0.0375'
             gripper_grasp['speed'] = '0.1000'
             gripper_grasp['ID'] = identifier
@@ -476,9 +476,9 @@ def write_yaml(routes, data):
             string_cart_move_obj = collapse_dict_to_string(cart_pose)
             #Configuring the Gripper to grip the object
             gripper_grasp['IP'] = '192.168.2.105'
-            if data['demands_small'][index]:
+            if int(identifier) in [30,31,32,33,34,35,36,37,38,39]:                    #data['demands_small'][index]
                 gripper_grasp['width'] = '0.0304'
-            elif data['demands_large'][index]:
+            elif int(identifier) in [40,41,42,43,44,45,46]:                           #data['demands_large'][index]
                 gripper_grasp['width'] = '0.0375'
             gripper_grasp['speed'] = '0.1000'
             gripper_grasp['ID'] = identifier
