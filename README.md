@@ -65,13 +65,23 @@ For Pickup:
 9. JointPose (Einlager Inter 1)
 10. JointPose (Einlager Inter 2)
 11. JointPose (Einlager Inter 3)
-9. JointPose (Einlager final)
-10. CartPose (Gripper release)
+12. JointPose (Einlager final)
+13. CartPose (Gripper release)
+14. JointPose (Einlager Inter 3)
+15. JointPose (Einlager Inter 2)
+16. JointPose (Einlager Inter 1)
+
 
 For Dropoff:
-1. JointPose (zu obj in lager) [Pickup 9]
-2. Gripper [Pickup 8]
-3. JointPose (zu Endlocation)
-4. CartPose (Gripper release)
+1. JointPose (Einlager Inter 1)
+2. JointPose (Einlager Inter 2)
+3. JointPose (Einlager Inter 3)
+4. JointPose (zu obj in lager) [Pickup 9]
+5. Gripper [Pickup 8]
+6. JointPose (Einlager Inter 3)
+7. JointPose (Einlager Inter 2)
+8. JointPose (Einlager Inter 1)
+9. JointPose (zu Endlocation)
+10. CartPose (Gripper release)
 
 Pickup and Dropoff Skills are generated together, saved to different lists and merged at the end to create the correct sequence in one go
