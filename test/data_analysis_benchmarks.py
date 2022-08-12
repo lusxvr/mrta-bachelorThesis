@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 try:
-    f_data = open('210_09_27_36_T100_I100.json', 'r')
+    f_data = open('BenchmarkData/210_09_27_36_T100_I100.json', 'r')
     data = json.load(f_data)
     f_data.close()
 except :
@@ -94,16 +94,21 @@ print(str(max_r2_nn) + ' - ' + str(max_r2_nn/max_r2_mrta))
 print('Mean Difference between Robots:')
 print(str(diff_nn) + ' - ' + str(diff_nn/diff_mrta))
 
-plt.subplots()
-plt.plot(data_r1_mrta, label='mrta1')
-plt.plot(data_r2_mrta, label='mrta2')
-plt.plot(data_r1_rand, label='rand1')
-plt.plot(data_r2_rand, label='rand2')
-plt.plot(data_r1_nn, label='nn1')
-plt.plot(data_r2_nn, label='nn2')
-plt.xlabel("Iterations")
-plt.ylabel("Distance")
-plt.legend()
+
+
+plt.subplots(figsize=(32,18))
+#plt.rcParams.update({'font.size': 30})
+plt.plot(data_r1_rand, label='Random R1', color='springgreen')
+plt.plot(data_r2_rand, label='Random R2', color='forestgreen')
+plt.plot(data_r1_nn, label='NN R1', color='brown')
+plt.plot(data_r2_nn, label='NN R2', color='red')
+plt.plot(data_r1_mrta, label='MRTA R1', color='blue')
+plt.plot(data_r2_mrta, label='MRTA R2', color='dodgerblue')
+plt.xlabel("Iterations", fontsize=20)
+plt.ylabel("Distance [cm]", fontsize=20)
+plt.legend(fontsize=18, markerscale=3)
+
+
 plt.show()
 
 

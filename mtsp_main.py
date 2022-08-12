@@ -352,6 +352,16 @@ def write_yaml(routes, data):
             base_pose['PosName'] = identifier                   #'PosTask_%s' %
             base_pose['UID'] = str(uuid.uuid4())
             string_base = collapse_dict_to_string(base_pose)
+            #Configuring the JointPose for Storage Scan
+            joint_pose['IP'] = '192.168.1.104'
+            joint_pose['PosName'] = 'storage_scan_pose_r'
+            joint_pose['UID'] = str(uuid.uuid4())
+            string_joint_storage_scan = collapse_dict_to_string(joint_pose)
+            #Configuring the Update Storage Pose
+            update_storage['IP'] = '192.168.1.104'
+            update_storage['CamID'] = '943222070069'
+            update_storage['UID'] = str(uuid.uuid4())
+            string_update_storage = collapse_dict_to_string(update_storage)
             #Configuring the JointPose for Workbench Scan
             joint_pose['IP'] = '192.168.1.104'
             joint_pose['PosName'] = 'workbench_scan_pose'
@@ -362,21 +372,11 @@ def write_yaml(routes, data):
             update_object_pose['CamID'] = '943222070069'
             update_object_pose['UID'] = str(uuid.uuid4())
             string_update_object = collapse_dict_to_string(update_object_pose)
-            #Configuring the JointPose for Storage Scan
+            #Configuring the JointPose to move to object
             joint_pose['IP'] = '192.168.1.104'
-            joint_pose['PosName'] = 'storage_scan_pose'
+            joint_pose['PosName'] = identifier                   #'PosTask_%s' %
             joint_pose['UID'] = str(uuid.uuid4())
-            string_joint_storage_scan = collapse_dict_to_string(joint_pose)
-            #Configuring the Update Object Pose
-            update_storage['IP'] = '192.168.1.104'
-            update_storage['CamID'] = '943222070069'
-            update_storage['UID'] = str(uuid.uuid4())
-            string_update_storage = collapse_dict_to_string(update_storage)
-            #Configuring the CartPose to move to object
-            cart_pose['IP'] = '192.168.1.104'
-            cart_pose['PosName'] = identifier                   #'PosTask_%s' %
-            cart_pose['UID'] = str(uuid.uuid4())
-            string_cart_move_obj = collapse_dict_to_string(cart_pose)
+            string_joint_move_obj = collapse_dict_to_string(joint_pose)
             #Configuring the Gripper to grip the object
             gripper_grasp['IP'] = '192.168.1.104'
             if int(identifier) in [30,31,32,33,34,35,36,37,38,39]:                    #data['demands_small'][index]
@@ -387,7 +387,22 @@ def write_yaml(routes, data):
             gripper_grasp['ID'] = identifier
             gripper_grasp['UID'] = str(uuid.uuid4())
             string_gripper_grasp = collapse_dict_to_string(gripper_grasp)
-            #Configuring the JointPose for storing
+            #Configuring the JointPose1 for storing
+            joint_pose['IP'] = '192.168.1.104'
+            joint_pose['PosName'] = 'StorageStepR1'
+            joint_pose['UID'] = str(uuid.uuid4())
+            string_joint_storing1 = collapse_dict_to_string(joint_pose)
+            #Configuring the JointPose2 for storing
+            joint_pose['IP'] = '192.168.1.104'
+            joint_pose['PosName'] = 'StorageStepR2'
+            joint_pose['UID'] = str(uuid.uuid4())
+            string_joint_storing2 = collapse_dict_to_string(joint_pose)
+            #Configuring the JointPose3 for storing
+            joint_pose['IP'] = '192.168.1.104'
+            joint_pose['PosName'] = 'StorageStepR3'
+            joint_pose['UID'] = str(uuid.uuid4())
+            string_joint_storing3 = collapse_dict_to_string(joint_pose)
+            #Configuring the final JointPose for storing
             joint_pose['IP'] = '192.168.1.104'
             joint_pose['PosName'] = 'storing' + str(identifier)
             joint_pose['UID'] = str(uuid.uuid4())
@@ -402,24 +417,27 @@ def write_yaml(routes, data):
             cart_pose['finger_width'] = '-1.0000'
             cart_pose['finger_speed'] = '0.0000'
             #Configuring the CartPose to move to end position
-            cart_pose['IP'] = '192.168.1.104'
-            cart_pose['PosName'] = '00'                   #'PosTask_%s' %
-            cart_pose['UID'] = str(uuid.uuid4())
-            string_cart_move_end = collapse_dict_to_string(cart_pose)
+            joint_pose['IP'] = '192.168.1.104'
+            joint_pose['PosName'] = '00'                   #'PosTask_%s' %
+            joint_pose['UID'] = str(uuid.uuid4())
+            string_joint_move_end = collapse_dict_to_string(joint_pose)
             #Appending the strings to the file
             template['dual-arm']['MRTA'].append(string_joint_travel)
             template['dual-arm']['MRTA'].append(string_base) 
-            template['dual-arm']['MRTA'].append(string_joint_workbench_scan)
-            template['dual-arm']['MRTA'].append(string_update_object)
             template['dual-arm']['MRTA'].append(string_joint_storage_scan)
             template['dual-arm']['MRTA'].append(string_update_storage)
-            template['dual-arm']['MRTA'].append(string_cart_move_obj)
+            template['dual-arm']['MRTA'].append(string_joint_workbench_scan)
+            template['dual-arm']['MRTA'].append(string_update_object)
+            template['dual-arm']['MRTA'].append(string_joint_move_obj)
             template['dual-arm']['MRTA'].append(string_gripper_grasp)
+            template['dual-arm']['MRTA'].append(string_joint_storing1)
+            template['dual-arm']['MRTA'].append(string_joint_storing2)
+            template['dual-arm']['MRTA'].append(string_joint_storing3)
             template['dual-arm']['MRTA'].append(string_joint_storing)
             template['dual-arm']['MRTA'].append(string_cart_release)
             task_list_release.append(string_joint_storing)
             task_list_release.append(string_gripper_grasp)
-            task_list_release.append(string_cart_move_end)
+            task_list_release.append(string_joint_move_end)
             task_list_release.append(string_cart_release)
             #Checking if there is waiting time between two tasks
             if x < len(routes['paths'][0]):
@@ -449,6 +467,16 @@ def write_yaml(routes, data):
             base_pose['PosName'] = identifier                   #'PosTask_%s' %
             base_pose['UID'] = str(uuid.uuid4())
             string_base = collapse_dict_to_string(base_pose)
+            #Configuring the JointPose for Storage Scan
+            joint_pose['IP'] = '192.168.2.105'
+            joint_pose['PosName'] = 'storage_scan_pose_l'
+            joint_pose['UID'] = str(uuid.uuid4())
+            string_joint_storage_scan = collapse_dict_to_string(joint_pose)
+            #Configuring the Update Object Pose
+            update_storage['IP'] = '192.168.2.105'
+            update_storage['CamID'] = '944122073409'
+            update_storage['UID'] = str(uuid.uuid4())
+            string_update_storage = collapse_dict_to_string(update_storage)
             #Configuring the JointPose for Workbench Scan
             joint_pose['IP'] = '192.168.2.105'
             joint_pose['PosName'] = 'workbench_scan_pose'
@@ -459,21 +487,11 @@ def write_yaml(routes, data):
             update_object_pose['CamID'] = '944122073409'
             update_object_pose['UID'] = str(uuid.uuid4())
             string_update_object = collapse_dict_to_string(update_object_pose)
-            #Configuring the JointPose for Storage Scan
+            #Configuring the JointPose to move to object
             joint_pose['IP'] = '192.168.2.105'
-            joint_pose['PosName'] = 'storage_scan_pose'
+            joint_pose['PosName'] = identifier                   #'PosTask_%s' %
             joint_pose['UID'] = str(uuid.uuid4())
-            string_joint_storage_scan = collapse_dict_to_string(joint_pose)
-            #Configuring the Update Object Pose
-            update_storage['IP'] = '192.168.2.105'
-            update_storage['CamID'] = '944122073409'
-            update_storage['UID'] = str(uuid.uuid4())
-            string_update_storage = collapse_dict_to_string(update_storage)
-            #Configuring the CartPose to move to object
-            cart_pose['IP'] = '192.168.2.105'
-            cart_pose['PosName'] = identifier                   #'PosTask_%s' %
-            cart_pose['UID'] = str(uuid.uuid4())
-            string_cart_move_obj = collapse_dict_to_string(cart_pose)
+            string_joint_move_obj = collapse_dict_to_string(joint_pose)
             #Configuring the Gripper to grip the object
             gripper_grasp['IP'] = '192.168.2.105'
             if int(identifier) in [30,31,32,33,34,35,36,37,38,39]:                    #data['demands_small'][index]
@@ -484,6 +502,21 @@ def write_yaml(routes, data):
             gripper_grasp['ID'] = identifier
             gripper_grasp['UID'] = str(uuid.uuid4())
             string_gripper_grasp = collapse_dict_to_string(gripper_grasp)
+            #Configuring the JointPose1 for storing
+            joint_pose['IP'] = '192.168.2.105'
+            joint_pose['PosName'] = 'StorageStepL1'
+            joint_pose['UID'] = str(uuid.uuid4())
+            string_joint_storing1 = collapse_dict_to_string(joint_pose)
+            #Configuring the JointPose2 for storing
+            joint_pose['IP'] = '192.168.2.105'
+            joint_pose['PosName'] = 'StorageStepL2'
+            joint_pose['UID'] = str(uuid.uuid4())
+            string_joint_storing2 = collapse_dict_to_string(joint_pose)
+            #Configuring the JointPose3 for storing
+            joint_pose['IP'] = '192.168.2.105'
+            joint_pose['PosName'] = 'StorageStepL3'
+            joint_pose['UID'] = str(uuid.uuid4())
+            string_joint_storing3 = collapse_dict_to_string(joint_pose)
             #Configuring the JointPose for storing
             joint_pose['IP'] = '192.168.2.105'
             joint_pose['PosName'] = 'storing' + str(identifier)
@@ -499,24 +532,27 @@ def write_yaml(routes, data):
             cart_pose['finger_width'] = '-1.0000'
             cart_pose['finger_speed'] = '0.0000'
             #Configuring the CartPose to move to end position
-            cart_pose['IP'] = '192.168.2.105'
-            cart_pose['PosName'] = '01'                   #'PosTask_%s' %
-            cart_pose['UID'] = str(uuid.uuid4())
-            string_cart_move_end = collapse_dict_to_string(cart_pose)
+            joint_pose['IP'] = '192.168.2.105'
+            joint_pose['PosName'] = '01'                   #'PosTask_%s' %
+            joint_pose['UID'] = str(uuid.uuid4())
+            string_joint_move_end = collapse_dict_to_string(joint_pose)
             #Appending the strings to the file
             template['dual-arm']['MRTA'].append(string_joint_travel)
             template['dual-arm']['MRTA'].append(string_base) 
-            template['dual-arm']['MRTA'].append(string_joint_workbench_scan)
-            template['dual-arm']['MRTA'].append(string_update_object)
             template['dual-arm']['MRTA'].append(string_joint_storage_scan)
             template['dual-arm']['MRTA'].append(string_update_storage)
-            template['dual-arm']['MRTA'].append(string_cart_move_obj)
+            template['dual-arm']['MRTA'].append(string_joint_workbench_scan)
+            template['dual-arm']['MRTA'].append(string_update_object)
+            template['dual-arm']['MRTA'].append(string_joint_move_obj)
             template['dual-arm']['MRTA'].append(string_gripper_grasp)
+            template['dual-arm']['MRTA'].append(string_joint_storing1)
+            template['dual-arm']['MRTA'].append(string_joint_storing2)
+            template['dual-arm']['MRTA'].append(string_joint_storing3)
             template['dual-arm']['MRTA'].append(string_joint_storing)
             template['dual-arm']['MRTA'].append(string_cart_release)
             task_list_release.append(string_joint_storing)
             task_list_release.append(string_gripper_grasp)
-            task_list_release.append(string_cart_move_end)
+            task_list_release.append(string_joint_move_end)
             task_list_release.append(string_cart_release)
             #Checking if there is waiting time between the tasks
             if y < len(routes['paths'][1]):
